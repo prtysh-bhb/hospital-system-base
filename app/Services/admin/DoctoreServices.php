@@ -51,20 +51,26 @@ class DoctoreServices
         \DB::beginTransaction();
 
         try {
-            // Create user with phone as password
+            // Generate secure random password for doctor
+            $randomPassword = \Str::random(12);
+
+            // Create user with secure password
             $user = User::create([
                 'role' => 'doctor',
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
                 'email' => $data['email'],
                 'phone' => $data['phone'],
-                'password' => \Hash::make($data['phone']), // Phone as password
+                'password' => \Hash::make($randomPassword),
                 'date_of_birth' => $data['date_of_birth'],
                 'gender' => $data['gender'],
                 'address' => $data['address'],
                 'profile_image' => $data['profile_image'] ?? null,
                 'status' => 'active',
             ]);
+
+            // TODO: Send email with temporary password to doctor
+            \Log::info("Doctor created with ID: {$user->id}. Temporary password should be emailed.");
 
             // Create doctor profile
             $doctorProfile = DoctorProfile::create([
@@ -74,7 +80,7 @@ class DoctoreServices
                 'experience_years' => $data['experience_years'],
                 'license_number' => $data['license_number'],
                 'consultation_fee' => $data['consultation_fee'],
-                'bio' => $data['languages'] ?? null,
+                'bio' => $data['bio'] ?? null,
                 'available_for_booking' => true,
             ]);
 
@@ -149,7 +155,7 @@ class DoctoreServices
                 'experience_years' => $data['experience_years'],
                 'license_number' => $data['license_number'],
                 'consultation_fee' => $data['consultation_fee'],
-                'bio' => $data['languages'] ?? null,
+                'bio' => $data['bio'] ?? null,
             ];
 
             // Only update available_for_booking if provided
