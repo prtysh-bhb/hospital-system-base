@@ -78,6 +78,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::delete('appointments/delete', [AppointmentController::class, 'deleteAppointment'])->name('delete-appointment');
     Route::get('appointments/{id}', [AppointmentController::class, 'viewAppointment'])->name('view-appointment');
 
+    // Appointment Rescheduling
+    Route::get('appointments/{id}/reschedule', [AppointmentController::class, 'showRescheduleForm'])->name('appointments.reschedule-form');
+    Route::get('appointments/reschedule/slots', [AppointmentController::class, 'getRescheduleSlotsAvailable'])->name('appointments.reschedule-slots');
+    Route::post('appointments/reschedule', [AppointmentController::class, 'reschedule'])->name('appointments.reschedule');
+
     Route::get('/doctors', [DoctorsController::class, 'index'])->name('doctors');
     Route::get('/doctors/add', [DoctorsController::class, 'create'])->name('doctors.add');
     Route::post('/doctors/add', [DoctorsController::class, 'store'])->name('doctors.store');

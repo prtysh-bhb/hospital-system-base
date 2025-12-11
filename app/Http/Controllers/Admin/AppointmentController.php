@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Models\User;
 use App\Models\Appointment;
+use App\Services\Admin\AppointmentRescheduleService;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\PatientProfile;
@@ -16,10 +17,14 @@ use App\Services\AppointmentSlotService;
 class AppointmentController extends Controller
 {
     protected $slotService;
+    protected AppointmentRescheduleService $rescheduleService;
 
-    public function __construct(AppointmentSlotService $slotService)
-    {
+    public function __construct(
+        AppointmentSlotService $slotService,
+        AppointmentRescheduleService $rescheduleService
+    ) {
         $this->slotService = $slotService;
+        $this->rescheduleService = $rescheduleService;
     }
 
     public function index()
@@ -500,6 +505,107 @@ class AppointmentController extends Controller
                 'msg' => 'Something went wrong. Please try again later.',
                 'error' => $e->getMessage(),
             ]);
+        }
+    }
+
+    /**
+     * Show reschedule form/modal for an appointment.
+     */
+    public function showRescheduleForm($id)
+    {
+        try {
+            $appointment = Appointment::with(['patient', 'doctor.doctorProfile'])->findOrFail($id);
+
+            // Check if can reschedule
+            $canReschedule = $this->rescheduleService->canReschedule($appointment);
+
+            if (!$canReschedule['can_reschedule']) {
+                return response()->json([
+                    'status' => 400,
+                    'msg' => $canReschedule['reason'],
+                ], 400);
+            }
+
+            return response()->json([
+                'status' => 200,
+                'data' => $appointment,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 400,
+                'msg' => 'Failed to load appointment details.',
+                'error' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
+     * Get available slots for rescheduling.
+     */
+    public function getRescheduleSlotsAvailable(Request $request)
+    {
+        $appointmentId = $request->get('appointment_id');
+        $doctorId = $request->get('doctor_id');
+        $date = $request->get('date');
+
+        $result = $this->rescheduleService->getAvailableSlotsForReschedule(
+            $doctorId,
+            $date,
+            $appointmentId
+        );
+
+        return response()->json($result);
+    }
+
+    /**
+     * Reschedule an appointment.
+     */
+    public function reschedule(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'appointment_id' => 'required|exists:appointments,id',
+                'appointment_date' => 'required|date|after_or_equal:today',
+                'appointment_time' => 'required|string',
+            ]);
+
+            $result = $this->rescheduleService->rescheduleAppointment(
+                $validated['appointment_id'],
+                [
+                    'appointment_date' => $validated['appointment_date'],
+                    'appointment_time' => $validated['appointment_time'],
+                ]
+            );
+
+            if ($result['success']) {
+                return response()->json([
+                    'status' => 200,
+                    'msg' => $result['message'],
+                    'data' => $result['appointment'],
+                ]);
+            }
+
+            return response()->json([
+                'status' => 400,
+                'msg' => $result['message'],
+            ], 400);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'status' => 422,
+                'msg' => 'Validation failed.',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Appointment reschedule failed: '.$e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'status' => 400,
+                'msg' => 'Failed to reschedule appointment.',
+                'error' => $e->getMessage(),
+            ], 400);
         }
     }
 }
