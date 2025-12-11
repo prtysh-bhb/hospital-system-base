@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\public;
+namespace App\Services\Public;
 
 use App\Models\Appointment;
 use App\Models\PatientProfile;

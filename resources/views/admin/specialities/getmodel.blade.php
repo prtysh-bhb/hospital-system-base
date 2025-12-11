@@ -24,12 +24,9 @@
         <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Description <span
                 class="text-red-600">*</span></label>
         <input type="text" name="description" id="description" value="{{ $data->description ?? '' }}"
-            pattern="^[a-zA-Z\s.,]+$" title="Only letters, spaces, commas and periods are allowed"
-            oninput="this.value = this.value.replace(/[^a-zA-Z\s.,]/g, '')"
             class="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-600 focus:border-transparent"
             placeholder="Enter description">
         <span class="text-red-600 text-sm error description_error"></span>
-        <p class="text-xs text-gray-500 mt-1">Only letters, spaces, commas and periods allowed</p>
     </div>
 
     <!-- Status Field -->

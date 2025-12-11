@@ -357,15 +357,15 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        showSuccessMessage(data.message || 'Patient deleted successfully!');
+                        toastr.success(data.message || 'Patient deleted successfully!');
                         fetchPatients(); // Refresh the patient list
                     } else {
-                        alert(data.message || 'Failed to delete patient');
+                        toastr.error(data.message || 'Failed to delete patient');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('An error occurred while deleting the patient. Please try again.');
+                    toastr.error('An error occurred while deleting the patient. Please try again.');
                 });
         }
 
@@ -403,9 +403,10 @@
                     if (data.success) {
                         closePatientEditModal();
                         fetchPatients();
-                        showSuccessMessage('Patient updated successfully!');
+                        toastr.success(data.message);
+
                     } else {
-                        alert(data.message || 'Failed to update patient');
+                        toastr.error(data.message);
                     }
                 })
                 .catch(error => {
@@ -415,9 +416,9 @@
                         // Display inline validation errors
                         displayFormErrors(error.data.errors);
                     } else if (error.data && error.data.message) {
-                        alert(error.data.message);
+                        toastr.error(error.data.message);
                     } else {
-                        alert('An error occurred while saving. Please try again.');
+                        toastr.error('An error occurred while saving. Please try again.');
                     }
                 });
         }
@@ -463,10 +464,6 @@
                     }
                 }
             });
-        }
-
-        function showSuccessMessage(message) {
-            alert(message);
         }
 
         function fetchPatients() {
@@ -520,7 +517,7 @@
                     document.getElementById('loadingIndicator').classList.add('hidden');
                     document.querySelector('.overflow-x-auto').style.opacity = '1';
                     console.log('error->>>>', error);
-                    alert('An error occurred while fetching patients. Please try again.');
+                    toastr.error('An error occurred while fetching patients. Please try again.');
                 });
         }
 

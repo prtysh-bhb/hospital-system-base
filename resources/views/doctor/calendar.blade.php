@@ -23,6 +23,13 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
                 </button>
+                <button id="todayBtn"
+                    class="px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition">
+                    Today
+                </button>
+                <input type="date" id="jumpToDate"
+                    class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+                    title="Jump to date">
             </div>
             <div class="flex gap-2 w-full sm:w-auto">
                 <button id="viewMonth"
@@ -141,10 +148,125 @@
         let currentMonth = '{{ date('Y-m') }}';
         let currentView = 'month'; // month, week, day
         let currentDate = new Date();
+        let doctorScheduleData = []; // Store doctor's weekly schedule
+
+        // Helper function to parse time string to hour in 24-hour format
+        function parseTimeToHour(timeStr) {
+            if (!timeStr) return -1;
+
+            // Handle formats like "9:00 AM", "10:30 PM", "09:00 AM"
+            const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+            if (!match) return -1;
+
+            let hour = parseInt(match[1], 10);
+            const period = match[3].toUpperCase();
+
+            if (period === 'PM' && hour !== 12) hour += 12;
+            if (period === 'AM' && hour === 12) hour = 0;
+
+            return hour;
+        }
+
+        // Get time slots for a specific day based on doctor's schedule
+        function getTimeSlotsForDay(dayOfWeek) {
+            const daySchedule = doctorScheduleData.find(s => s.day_of_week === dayOfWeek);
+
+            if (!daySchedule || !daySchedule.is_available) {
+                // Return default slots if no schedule found
+                return generateTimeSlots(9, 17); // 9 AM to 5 PM default
+            }
+
+            const startHour = parseTimeToHour(daySchedule.start_time);
+            const endHour = parseTimeToHour(daySchedule.end_time);
+
+            return generateTimeSlots(startHour, endHour);
+        }
+
+        // Generate time slots array between start and end hour
+        function generateTimeSlots(startHour, endHour) {
+            const slots = [];
+            for (let hour = startHour; hour <= endHour; hour++) {
+                const period = hour >= 12 ? 'PM' : 'AM';
+                const displayHour = hour === 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+                slots.push({
+                    display: `${displayHour}:00 ${period}`,
+                    hour: hour
+                });
+            }
+            return slots;
+        }
+
+        // Update URL without page refresh
+        function updateURL() {
+            const params = new URLSearchParams();
+            params.set('view', currentView);
+
+            if (currentView === 'month') {
+                const [year, month] = currentMonth.split('-');
+                params.set('year', year);
+                params.set('month', month);
+                // Calculate from and to dates for month
+                const firstDay = new Date(year, month - 1, 1);
+                const lastDay = new Date(year, month, 0);
+                params.set('from', firstDay.toISOString().split('T')[0]);
+                params.set('to', lastDay.toISOString().split('T')[0]);
+            } else if (currentView === 'week') {
+                const startOfWeek = getStartOfWeek(currentDate);
+                const endOfWeek = new Date(startOfWeek);
+                endOfWeek.setDate(startOfWeek.getDate() + 6);
+                params.set('from', startOfWeek.toISOString().split('T')[0]);
+                params.set('to', endOfWeek.toISOString().split('T')[0]);
+            } else if (currentView === 'day') {
+                const dateStr = currentDate.toISOString().split('T')[0];
+                params.set('date', dateStr);
+                params.set('from', dateStr);
+                params.set('to', dateStr);
+            }
+
+            const newUrl = `${window.location.pathname}?${params.toString()}`;
+            window.history.pushState({
+                path: newUrl
+            }, '', newUrl);
+        }
+
+        // Get start of week (Sunday)
+        function getStartOfWeek(date) {
+            const d = new Date(date);
+            const day = d.getDay();
+            d.setDate(d.getDate() - day);
+            return d;
+        }
 
         $(document).ready(function() {
+            // Load initial view from URL params
+            const urlParams = new URLSearchParams(window.location.search);
+            const viewParam = urlParams.get('view');
+            if (viewParam && ['month', 'week', 'day'].includes(viewParam)) {
+                currentView = viewParam;
+            }
+
+            // Set date from URL if present
+            const fromParam = urlParams.get('from');
+            if (fromParam) {
+                currentDate = new Date(fromParam);
+                const yearParam = urlParams.get('year');
+                const monthParam = urlParams.get('month');
+                if (yearParam && monthParam) {
+                    currentMonth = `${yearParam}-${monthParam.padStart(2, '0')}`;
+                }
+            }
+
             console.log('Document ready, loading calendar for:', currentMonth);
-            loadCalendar(currentMonth);
+
+            // Load appropriate view based on URL (pass false to avoid re-updating URL)
+            if (currentView === 'week') {
+                switchView('week', false);
+            } else if (currentView === 'day') {
+                switchView('day', false);
+            } else {
+                switchView('month', false);
+            }
+
             loadWeeklySchedule();
 
             // View switchers
@@ -168,12 +290,15 @@
                     currentMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
                     console.log('Loading previous month:', currentMonth);
                     loadCalendar(currentMonth);
+                    updateURL();
                 } else if (currentView === 'week') {
                     currentDate.setDate(currentDate.getDate() - 7);
                     loadWeekView();
+                    updateURL();
                 } else if (currentView === 'day') {
                     currentDate.setDate(currentDate.getDate() - 1);
                     loadDayView();
+                    updateURL();
                 }
             });
 
@@ -185,17 +310,39 @@
                     currentMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
                     console.log('Loading next month:', currentMonth);
                     loadCalendar(currentMonth);
+                    updateURL();
                 } else if (currentView === 'week') {
                     currentDate.setDate(currentDate.getDate() + 7);
                     loadWeekView();
+                    updateURL();
                 } else if (currentView === 'day') {
                     currentDate.setDate(currentDate.getDate() + 1);
                     loadDayView();
+                    updateURL();
+                }
+            });
+
+            // Today button handler
+            $('#todayBtn').on('click', function() {
+                currentDate = new Date();
+                const today = new Date();
+                currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+                switchView(currentView);
+            });
+
+            // Jump to date handler
+            $('#jumpToDate').on('change', function() {
+                const selectedDate = $(this).val();
+                if (selectedDate) {
+                    currentDate = new Date(selectedDate);
+                    currentMonth =
+                        `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+                    switchView(currentView);
                 }
             });
         });
 
-        function switchView(view) {
+        function switchView(view, shouldUpdateUrl = true) {
             currentView = view;
 
             // Update button styles
@@ -219,6 +366,10 @@
                 $('#weekView').addClass('hidden');
                 $('#dayView').removeClass('hidden');
                 loadDayView();
+            }
+
+            if (shouldUpdateUrl) {
+                updateURL();
             }
         }
 
@@ -276,6 +427,32 @@
                 'cancelled': 'bg-red-100 text-red-700 border-red-200'
             };
 
+            // Calculate time range based on doctor's schedule for the week
+            let minStartHour = 23;
+            let maxEndHour = 0;
+
+            weekDates.forEach(function(dateStr) {
+                const date = new Date(dateStr);
+                const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+                const daySchedule = doctorScheduleData.find(s => s.day_of_week === dayOfWeek);
+
+                if (daySchedule && daySchedule.is_available) {
+                    const startHour = parseTimeToHour(daySchedule.start_time);
+                    const endHour = parseTimeToHour(daySchedule.end_time);
+                    if (startHour < minStartHour) minStartHour = startHour;
+                    if (endHour > maxEndHour) maxEndHour = endHour;
+                }
+            });
+
+            // Default to 9 AM - 5 PM if no schedule found
+            if (minStartHour > maxEndHour) {
+                minStartHour = 9;
+                maxEndHour = 17;
+            }
+
+            // Generate time slots
+            const timeSlots = generateTimeSlots(minStartHour, maxEndHour);
+
             let html = `
                 <div class="border border-gray-200 rounded-lg overflow-hidden">
                     <!-- Week Header -->
@@ -285,9 +462,10 @@
                         </div>
             `;
 
-            // Add day headers
+            // Add day headers with availability indicator
             weekDates.forEach(function(dateStr, index) {
                 const date = new Date(dateStr);
+                const dayOfWeek = date.getDay();
                 const dayName = date.toLocaleDateString('en-US', {
                     weekday: 'short'
                 });
@@ -296,47 +474,60 @@
                     month: 'short'
                 });
                 const isToday = dateStr === new Date().toISOString().split('T')[0];
+                const daySchedule = doctorScheduleData.find(s => s.day_of_week === dayOfWeek);
+                const isAvailable = daySchedule && daySchedule.is_available;
 
                 html += `
-                    <div class="p-4 text-center border-r border-gray-200 ${isToday ? 'bg-sky-50' : ''}">
+                    <div class="p-4 text-center border-r border-gray-200 ${isToday ? 'bg-sky-50' : ''} ${!isAvailable ? 'bg-gray-100' : ''}">
                         <p class="text-xs font-semibold text-gray-500 uppercase">${dayName}</p>
                         <p class="text-lg font-bold ${isToday ? 'text-sky-600' : 'text-gray-800'}">${dayNum}</p>
                         <p class="text-xs text-gray-500">${monthName}</p>
+                        ${!isAvailable ? '<p class="text-xs text-red-500 mt-1">Off</p>' : ''}
                     </div>
                 `;
             });
 
             html += `</div>`;
 
-            // Time slots (7 AM to 7 PM)
-            const timeSlots = [
-                '7:00 AM', '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
-                '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'
-            ];
-
-            timeSlots.forEach(timeSlot => {
+            timeSlots.forEach(slot => {
                 html += `<div class="grid grid-cols-8 border-b border-gray-100">`;
 
                 // Time column
                 html += `
                     <div class="p-4 border-r border-gray-200 bg-gray-50">
-                        <p class="text-sm font-medium text-gray-600">${timeSlot}</p>
+                        <p class="text-sm font-medium text-gray-600">${slot.display}</p>
                     </div>
                 `;
 
                 // Day columns
                 weekDates.forEach(function(dateStr, index) {
                     const date = new Date(dateStr);
+                    const dayOfWeek = date.getDay();
                     const isToday = dateStr === new Date().toISOString().split('T')[0];
                     const appointments = responses[index]?.success ? responses[index].appointments : [];
+                    const daySchedule = doctorScheduleData.find(s => s.day_of_week === dayOfWeek);
+                    const isAvailable = daySchedule && daySchedule.is_available;
 
-                    // Filter appointments for this time slot
+                    // Check if this slot is within doctor's working hours for this day
+                    let isWithinWorkingHours = false;
+                    if (isAvailable) {
+                        const dayStartHour = parseTimeToHour(daySchedule.start_time);
+                        const dayEndHour = parseTimeToHour(daySchedule.end_time);
+                        isWithinWorkingHours = slot.hour >= dayStartHour && slot.hour <= dayEndHour;
+                    }
+
+                    // Filter appointments for this time slot using hour-based matching
+                    const slotHour = slot.hour;
                     const slotAppointments = appointments.filter(apt => {
-                        return apt.time === timeSlot;
+                        const aptHour = parseTimeToHour(apt.time);
+                        return aptHour === slotHour;
                     });
 
+                    const bgClass = !isAvailable ? 'bg-gray-100' : (isToday ? 'bg-sky-50' : (!
+                        isWithinWorkingHours ? 'bg-gray-50' : ''));
+
                     html += `
-                        <div class="p-2 border-r border-gray-100 min-h-20 ${isToday ? 'bg-sky-50' : ''}">
+                        <div class="p-2 border-r border-gray-100 min-h-20 ${bgClass}">
                     `;
 
                     if (slotAppointments.length > 0) {
@@ -404,32 +595,53 @@
                 'cancelled': 'bg-red-100 text-red-700 border-red-200'
             };
 
+            // Get the day of week for current date
+            const dayOfWeek = currentDate.getDay();
+            const daySchedule = doctorScheduleData.find(s => s.day_of_week === dayOfWeek);
+            const isAvailable = daySchedule && daySchedule.is_available;
+
+            // Get time slots based on doctor's schedule for this day
+            let timeSlots;
+            let dayStartHour = 9;
+            let dayEndHour = 17;
+
+            if (isAvailable) {
+                dayStartHour = parseTimeToHour(daySchedule.start_time);
+                dayEndHour = parseTimeToHour(daySchedule.end_time);
+                timeSlots = generateTimeSlots(dayStartHour, dayEndHour);
+            } else {
+                // Default slots for unavailable days
+                timeSlots = generateTimeSlots(9, 17);
+            }
+
             let html = `
                 <div class="border border-gray-200 rounded-lg overflow-hidden">
                     <!-- Day Header -->
-                    <div class="p-6 border-b border-gray-200 bg-gray-50">
-                        <h3 class="text-xl font-semibold text-gray-800">${dateTitle}</h3>
+                    <div class="p-6 border-b border-gray-200 ${isAvailable ? 'bg-gray-50' : 'bg-red-50'}">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-xl font-semibold text-gray-800">${dateTitle}</h3>
+                            ${isAvailable 
+                                ? `<span class="text-sm text-green-600 bg-green-100 px-3 py-1 rounded-full">Working: ${daySchedule.start_time} - ${daySchedule.end_time}</span>` 
+                                : '<span class="text-sm text-red-600 bg-red-100 px-3 py-1 rounded-full">Day Off</span>'}
+                        </div>
                     </div>
 
                     <!-- Time Grid -->
                     <div class="divide-y divide-gray-100">
             `;
 
-            // Time slots for the day (7 AM to 7 PM)
-            const timeSlots = [
-                '7:00 AM', '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
-                '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'
-            ];
-
-            timeSlots.forEach(timeSlot => {
+            timeSlots.forEach(slot => {
+                // Use hour-based matching for better compatibility
+                const slotHour = slot.hour;
                 const slotAppointments = appointments.filter(apt => {
-                    return apt.time === timeSlot;
+                    const aptHour = parseTimeToHour(apt.time);
+                    return aptHour === slotHour;
                 });
 
                 html += `
                     <div class="grid grid-cols-12 p-4 hover:bg-gray-50 transition-colors">
                         <div class="col-span-2">
-                            <p class="text-sm font-medium text-gray-600">${timeSlot}</p>
+                            <p class="text-sm font-medium text-gray-600">${slot.display}</p>
                         </div>
                         <div class="col-span-10">
                 `;
@@ -460,7 +672,8 @@
                         `;
                     });
                 } else {
-                    html += `<p class="text-sm text-gray-400 italic">No appointments scheduled</p>`;
+                    html +=
+                        `<p class="text-sm text-gray-400 italic">${isAvailable ? 'No appointments scheduled' : 'Not available'}</p>`;
                 }
 
                 html += `</div></div>`;
@@ -580,6 +793,8 @@
                     console.log('Schedule response:', response);
 
                     if (response.success) {
+                        // Store schedule data globally for use in week/day views
+                        doctorScheduleData = response.schedule;
                         renderWeeklySchedule(response.schedule);
                     } else {
                         showError('#weeklySchedule', response.message || 'Failed to load schedule');
@@ -871,13 +1086,13 @@
                                             <span class="text-gray-700">${apt.type}</span>
                                         </div>
                                         ${apt.reason ? `
-                                                                                                        <div class="flex items-start text-sm">
-                                                                                                            <svg class="w-4 h-4 mr-2 text-gray-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                                                                                            </svg>
-                                                                                                            <span class="text-gray-600">${apt.reason}</span>
-                                                                                                        </div>
-                                                                                                        ` : ''}
+                                                                                                                        <div class="flex items-start text-sm">
+                                                                                                                            <svg class="w-4 h-4 mr-2 text-gray-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                                                                                            </svg>
+                                                                                                                            <span class="text-gray-600">${apt.reason}</span>
+                                                                                                                        </div>
+                                                                                                                        ` : ''}
                                     </div>
                                 </div>
                             `).join('');

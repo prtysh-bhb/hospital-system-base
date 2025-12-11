@@ -7,7 +7,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
-class specialitiesServices
+class SpecialitiesServices
 {
     public function getList($request)
     {
@@ -43,7 +43,7 @@ class specialitiesServices
 
         $rules = [
             'name' => $nameRule,
-            'description' => 'required|string|max:50|regex:/^[a-zA-Z\s.,]+$/',
+            'description' => 'required|string|max:255',
             'status' => 'required|in:active,inactive',
         ];
 
@@ -52,7 +52,6 @@ class specialitiesServices
             'name.required' => 'Please enter name',
             'name.regex' => 'Name can only contain letters and spaces',
             'description.required' => 'Please enter description',
-            'description.regex' => 'Description can only contain letters, spaces, commas and periods',
             'status.required' => 'Please select status',
         ];
 

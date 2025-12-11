@@ -1,21 +1,21 @@
 <?php
 
-use App\Http\Controllers\admin\AdminDashboardController;
-use App\Http\Controllers\admin\AppointmentController;
-use App\Http\Controllers\admin\CalendarController as AdminCalendarController;
-use App\Http\Controllers\admin\docktorsController;
-use App\Http\Controllers\admin\PetientController;
-use App\Http\Controllers\admin\specialitiesController;
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AppointmentController;
+use App\Http\Controllers\Admin\CalendarController as AdminCalendarController;
+use App\Http\Controllers\Admin\DoctorsController;
+use App\Http\Controllers\Admin\PatientController;
+use App\Http\Controllers\Admin\SpecialtiesController;
 use App\Http\Controllers\Auth\AuthController;
-use App\Http\Controllers\doctor\CalendarController;
-use App\Http\Controllers\doctor\DoctorAppointmentController;
-use App\Http\Controllers\doctor\DoctorDashboarController;
-use App\Http\Controllers\frontdesk\AddApoimnetController;
-use App\Http\Controllers\frontdesk\DoctoreScheduleController;
-use App\Http\Controllers\frontdesk\FrontDashboardController;
-use App\Http\Controllers\frontdesk\HistoryController;
-use App\Http\Controllers\frontdesk\PatientController;
-use App\Http\Controllers\public\BookAppointmentController;
+use App\Http\Controllers\Doctor\CalendarController;
+use App\Http\Controllers\Doctor\DoctorAppointmentController;
+use App\Http\Controllers\Doctor\DoctorDashboardController;
+use App\Http\Controllers\Frontdesk\AddAppointmentController;
+use App\Http\Controllers\Frontdesk\DoctorScheduleController;
+use App\Http\Controllers\Frontdesk\FrontDashboardController;
+use App\Http\Controllers\Frontdesk\HistoryController;
+use App\Http\Controllers\Frontdesk\PatientController as FrontPatientController;
+use App\Http\Controllers\Public\BookAppointmentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -60,13 +60,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard-details', [AdminDashboardController::class, 'getDashboardDetails'])->name('dashboard.details');
 
-    Route::get('specialities', [specialitiesController::class, 'index'])->name('specialities');
-    Route::get('specialities/{id}', [specialitiesController::class, 'view'])->name('specialities-view');
-    Route::get('specialities-list', [specialitiesController::class, 'getList'])->name('specialities-list');
-    Route::post('getmodel', [specialitiesController::class, 'getmodel'])->name('specialities-getmodel');
-    Route::post('store', [specialitiesController::class, 'store'])->name('specialities-store');
-    Route::post('specialities', [specialitiesController::class, 'toggleStatus'])->name('specialities-toggleStatus');
-    Route::delete('specialities/{id}', [specialitiesController::class, 'destroy'])->name('specialities-destroy');
+    Route::get('specialities', [SpecialtiesController::class, 'index'])->name('specialities');
+    Route::get('specialities/{id}', [SpecialtiesController::class, 'view'])->name('specialities-view');
+    Route::get('specialities-list', [SpecialtiesController::class, 'getList'])->name('specialities-list');
+    Route::post('getmodel', [SpecialtiesController::class, 'getmodel'])->name('specialities-getmodel');
+    Route::post('store', [SpecialtiesController::class, 'store'])->name('specialities-store');
+    Route::post('specialities', [SpecialtiesController::class, 'toggleStatus'])->name('specialities-toggleStatus');
+    Route::delete('specialities/{id}', [SpecialtiesController::class, 'destroy'])->name('specialities-destroy');
 
     Route::get('appointments', [AppointmentController::class, 'index'])->name('appointments');
     Route::get('appointmentslist', [AppointmentController::class, 'getAppointments'])->name('appointments-list');
@@ -78,21 +78,22 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::delete('appointments/delete', [AppointmentController::class, 'deleteAppointment'])->name('delete-appointment');
     Route::get('appointments/{id}', [AppointmentController::class, 'viewAppointment'])->name('view-appointment');
 
-    Route::get('/doctors', [docktorsController::class, 'index'])->name('doctors');
-    Route::get('/doctors/add', [docktorsController::class, 'create'])->name('doctors.add');
-    Route::post('/doctors/add', [docktorsController::class, 'store'])->name('doctors.store');
-    Route::get('/doctors/{id}', [docktorsController::class, 'show'])->name('doctors.show');
-    Route::get('/doctors/{id}/edit', [docktorsController::class, 'edit'])->name('doctors.edit');
-    Route::put('/doctors/{id}', [docktorsController::class, 'update'])->name('doctors.update');
-    Route::delete('/doctors/{id}', [docktorsController::class, 'destroy'])->name('doctors.destroy');
+    Route::get('/doctors', [DoctorsController::class, 'index'])->name('doctors');
+    Route::get('/doctors/add', [DoctorsController::class, 'create'])->name('doctors.add');
+    Route::post('/doctors/add', [DoctorsController::class, 'store'])->name('doctors.store');
+    Route::get('/doctors/{id}', [DoctorsController::class, 'show'])->name('doctors.show');
+    Route::get('/doctors/{id}/edit', [DoctorsController::class, 'edit'])->name('doctors.edit');
+    Route::put('/doctors/{id}', [DoctorsController::class, 'update'])->name('doctors.update');
+    Route::delete('/doctors/{id}', [DoctorsController::class, 'destroy'])->name('doctors.destroy');
 
-    Route::get('/patients', [PetientController::class, 'index'])->name('patients');
-    Route::get('/patients/{id}', [PetientController::class, 'show'])->name('patient-view');
-    Route::get('/patients/{id}/edit', [PetientController::class, 'edit'])->name('patient-edit');
-    Route::post('/patients/{id}', [PetientController::class, 'update'])->name('patient-update');
-    Route::delete('/patients/{id}', [PetientController::class, 'destroy'])->name('patient-delete');
+    Route::get('/patients', [PatientController::class, 'index'])->name('patients');
+    Route::get('/patients/{id}', [PatientController::class, 'show'])->name('patient-view');
+    Route::get('/patients/{id}/edit', [PatientController::class, 'edit'])->name('patient-edit');
+    Route::post('/patients/{id}', [PatientController::class, 'update'])->name('patient-update');
+    Route::delete('/patients/{id}', [PatientController::class, 'destroy'])->name('patient-delete');
 
     Route::get('/calendar', [AdminCalendarController::class, 'index'])->name('calendar');
+    Route::get('/calendar/month', [AdminCalendarController::class, 'getMonthView'])->name('calendar.month');
     Route::get('/calendar/appointments', [AdminCalendarController::class, 'getDateAppointments'])->name('calendar.appointments');
     Route::get('/calendar/week', [AdminCalendarController::class, 'getWeekView'])->name('calendar.week');
     Route::get('/calendar/day', [AdminCalendarController::class, 'getDayView'])->name('calendar.day');
@@ -101,7 +102,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
 
 // Doctor Routes
 Route::prefix('doctor')->name('doctor.')->middleware(['auth', 'role:doctor'])->group(function () {
-    Route::get('dashboard', [DoctorDashboarController::class, 'index'])->name('dashboard');
+    Route::get('dashboard', [DoctorDashboardController::class, 'index'])->name('dashboard');
 
     Route::get('appointments', [DoctorAppointmentController::class, 'index'])->name('appointments');
     Route::get('appointment-details/{id}', [DoctorAppointmentController::class, 'doctorAppointmentDetails'])->name('appointment-details');
@@ -126,18 +127,17 @@ Route::prefix('frontdesk')->name('frontdesk.')->middleware(['auth', 'role:frontd
     Route::get('/dashboard', [FrontDashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/stats', [FrontDashboardController::class, 'getDashboardStats'])->name('dashboard.stats');
 
-    Route::get('/add-appointment', [AddApoimnetController::class, 'index'])->name('add-appointment');
-    Route::get('/add-appointment/search-patient', [AddApoimnetController::class, 'searchPatient'])->name('add-appointment.search-patient');
-    Route::get('/add-appointment/doctors', [AddApoimnetController::class, 'getDoctors'])->name('add-appointment.doctors');
-    Route::get('/add-appointment/available-slots', [AddApoimnetController::class, 'getAvailableSlots'])->name('add-appointment.available-slots');
-    Route::post('/add-appointment/store', [AddApoimnetController::class, 'store'])->name('add-appointment.store');
+    Route::get('/add-appointment', [AddAppointmentController::class, 'index'])->name('add-appointment');
+    Route::get('/add-appointment/search-patient', [AddAppointmentController::class, 'searchPatient'])->name('add-appointment.search-patient');
+    Route::get('/add-appointment/doctors', [AddAppointmentController::class, 'getDoctors'])->name('add-appointment.doctors');
+    Route::get('/add-appointment/available-slots', [AddAppointmentController::class, 'getAvailableSlots'])->name('add-appointment.available-slots');
+    Route::post('/add-appointment/store', [AddAppointmentController::class, 'store'])->name('add-appointment.store');
+    Route::get('/doctor-schedule', [DoctorScheduleController::class, 'index'])->name('doctor-schedule');
 
-    Route::get('/doctor-schedule', [DoctoreScheduleController::class, 'index'])->name('doctor-schedule');
-
-    Route::get('/patients', [PatientController::class, 'index'])->name('patients');
-    Route::get('/patients/{id}', [PatientController::class, 'show'])->name('patients.show');
-    Route::put('/patients/{id}', [PatientController::class, 'update'])->name('patients.update');
-    Route::delete('/patients/{id}', [PatientController::class, 'destroy'])->name('patients.destroy');
+    Route::get('/patients', [FrontPatientController::class, 'index'])->name('patients');
+    Route::get('/patients/{id}', [FrontPatientController::class, 'show'])->name('patients.show');
+    Route::put('/patients/{id}', [FrontPatientController::class, 'update'])->name('patients.update');
+    Route::delete('/patients/{id}', [FrontPatientController::class, 'destroy'])->name('patients.destroy');
 
     Route::get('/history', [HistoryController::class, 'index'])->name('history');
     Route::get('/history/export/csv', [HistoryController::class, 'exportCsv'])->name('history.export');

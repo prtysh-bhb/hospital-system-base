@@ -1,16 +1,16 @@
 <?php
 
-namespace App\Http\Controllers\frontdesk;
+namespace App\Http\Controllers\Frontdesk;
 
 use App\Http\Controllers\Controller;
-use App\Services\frontdesk\petientService;
+use App\Services\Frontdesk\PatientService;
 use Illuminate\Http\Request;
 
 class PatientController extends Controller
 {
     protected $patientService;
 
-    public function __construct(petientService $patientService)
+    public function __construct(PatientService $patientService)
     {
         $this->patientService = $patientService;
     }

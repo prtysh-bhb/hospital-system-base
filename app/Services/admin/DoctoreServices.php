@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\admin;
+namespace App\Services\Admin;
 
 use App\Models\DoctorProfile;
 use App\Models\DoctorSchedule;

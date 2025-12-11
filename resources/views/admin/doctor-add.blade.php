@@ -127,6 +127,9 @@
                             <option value="inactive"
                                 {{ old('status', $doctor->user->status ?? '') == 'inactive' ? 'selected' : '' }}>Inactive
                             </option>
+                            <option value="suspended"
+                                {{ old('status', $doctor->user->status ?? '') == 'suspended' ? 'selected' : '' }}>Suspended
+                            </option>
                         </select>
                     </div>
 
@@ -184,7 +187,7 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Specialty <span
                             class="text-red-600">*</span></label>
-                    <select name="specialty_id"
+                    <select id="specialty_select" name="specialty_id"
                         class="w-full px-4 py-2 border {{ $errors->has('specialty_id') ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-sky-500' }} rounded-lg focus:ring-2 focus:border-transparent">
                         <option value="">Select Specialty</option>
                         @foreach ($specialties as $specialty)
@@ -353,9 +356,24 @@
         </div>
     </form>
 
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            $('#specialty_select').select2({
+                placeholder: "Select specialty", // Placeholder text
+                allowClear: true, // Shows a clear (x) button
+                closeOnSelect: false // Keep dropdown open for multiple select
+            });
+
+            // Optional: Listen for changes
+            $('#specialty_select').on('select2:select select2:unselect', function(e) {
+                console.log("Selected values:", $(this).val());
+            });
+
+
             const form = document.getElementById('doctorForm');
+            const submitButton = form.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton.innerHTML;
 
             // Define required fields
             const requiredFields = [
@@ -364,36 +382,71 @@
                 'experience_years', 'license_number', 'consultation_fee', 'slot_duration'
             ];
 
-            // Scroll to first error field if there are server-side errors
-            const firstError = document.querySelector('.border-red-500');
-            if (firstError) {
-                firstError.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center'
-                });
-                firstError.focus();
+            // Check if there are server-side validation errors
+            function checkServerSideErrors() {
+                const errorFields = document.querySelectorAll('.border-red-500');
+                if (errorFields.length > 0) {
+                    const firstError = errorFields[0];
+                    firstError.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                    firstError.focus();
+
+                    // Remove error on input for server-side errors
+                    errorFields.forEach(field => {
+                        field.addEventListener('input', function() {
+                            clearFieldError(this);
+                            this.classList.remove('border-red-500', 'focus:ring-red-500');
+                            this.classList.add('border-gray-300', 'focus:ring-sky-500');
+                        });
+                    });
+                }
             }
 
-            // Add blur validation for all required fields
+            // Initialize checking for server-side errors
+            checkServerSideErrors();
+
+            // Add input and blur validation for all required fields
             requiredFields.forEach(fieldName => {
                 const field = form.querySelector(`[name="${fieldName}"]`);
                 if (field) {
-                    field.addEventListener('blur', function() {
-                        validateField(this);
+                    // Remove error styling on input
+                    field.addEventListener('input', function() {
+                        clearFieldError(this);
+                        this.classList.remove('border-red-500', 'focus:ring-red-500');
+                        this.classList.add('border-gray-300', 'focus:ring-sky-500');
                     });
 
-                    field.addEventListener('input', function() {
-                        // Remove error styling on input
-                        clearFieldError(this);
+                    // Validate on blur
+                    field.addEventListener('blur', function() {
+                        validateField(this);
                     });
                 }
             });
 
-            // Form submit validation
-            form.addEventListener('submit', function(e) {
+            // Also add validation for optional fields with patterns
+            const patternFields = ['first_name', 'last_name', 'phone'];
+            patternFields.forEach(fieldName => {
+                const field = form.querySelector(`[name="${fieldName}"]`);
+                if (field) {
+                    field.addEventListener('input', function() {
+                        clearFieldError(this);
+                        this.classList.remove('border-red-500', 'focus:ring-red-500');
+                        this.classList.add('border-gray-300', 'focus:ring-sky-500');
+                    });
+                }
+            });
+
+            // Form submit validation and AJAX submission
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                // Client-side validation
                 let isValid = true;
                 let firstInvalidField = null;
 
+                // Validate all required fields
                 requiredFields.forEach(fieldName => {
                     const field = form.querySelector(`[name="${fieldName}"]`);
                     if (field && !validateField(field)) {
@@ -405,7 +458,6 @@
                 });
 
                 if (!isValid) {
-                    e.preventDefault();
                     if (firstInvalidField) {
                         firstInvalidField.scrollIntoView({
                             behavior: 'smooth',
@@ -413,8 +465,113 @@
                         });
                         firstInvalidField.focus();
                     }
+                    return;
+                }
+
+                // Prepare form data for AJAX submission
+                const formData = new FormData(form);
+
+                // Show loading state
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+                submitButton.disabled = true;
+
+                try {
+                    // Send AJAX request
+                    const response = await fetch(form.action, {
+                        method: form.method,
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        // Success: Show toastr message
+                        toastr.success(data.message);
+
+                        // Reset form if it's a create operation
+                        if (!form.querySelector('input[name="_method"][value="PUT"]')) {
+                            form.reset();
+                        }
+
+                        // Redirect after 2 seconds
+                        setTimeout(() => {
+                            window.location.href = data.redirect_url ||
+                                '{{ route('admin.doctors') }}';
+                        }, 1000);
+
+                    } else {
+                        // Validation errors or other errors
+                        if (data.errors) {
+                            // Display validation errors under each field
+                            displayValidationErrors(data.errors);
+
+                            // Scroll to first error
+                            const firstErrorField = document.querySelector('.border-red-500');
+                            if (firstErrorField) {
+                                firstErrorField.scrollIntoView({
+                                    behavior: 'smooth',
+                                    block: 'center'
+                                });
+                                firstErrorField.focus();
+                            }
+                        } else {
+                            toastr.error(data.message || 'Something went wrong. Please try again.');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    toastr.error('Network error. Please check your connection and try again.');
+                } finally {
+                    // Reset button state
+                    submitButton.innerHTML = originalButtonText;
+                    submitButton.disabled = false;
                 }
             });
+
+            function displayValidationErrors(errors) {
+                // Clear all existing error messages first
+                document.querySelectorAll('.error-message').forEach(el => el.remove());
+                document.querySelectorAll('.border-red-500').forEach(el => {
+                    el.classList.remove('border-red-500', 'focus:ring-red-500');
+                    el.classList.add('border-gray-300', 'focus:ring-sky-500');
+                });
+
+                // Add new error messages
+                for (const [fieldName, messages] of Object.entries(errors)) {
+                    const field = form.querySelector(`[name="${fieldName}"]`);
+                    if (field) {
+                        // Add error styling
+                        field.classList.remove('border-gray-300', 'focus:ring-sky-500');
+                        field.classList.add('border-red-500', 'focus:ring-red-500');
+
+                        // Add error message
+                        const errorElement = document.createElement('p');
+                        errorElement.className = 'error-message text-red-600 text-sm mt-1';
+                        errorElement.textContent = messages[0];
+                        field.parentElement.appendChild(errorElement);
+                    } else {
+                        // Handle nested fields like schedules[0].end_time
+                        const fieldParts = fieldName.split('.');
+                        if (fieldParts.length > 1) {
+                            const field = form.querySelector(
+                                `[name="${fieldParts[0]}[${fieldParts[1]}][${fieldParts[2]}]"]`);
+                            if (field) {
+                                field.classList.remove('border-gray-300', 'focus:ring-sky-500');
+                                field.classList.add('border-red-500', 'focus:ring-red-500');
+
+                                const errorElement = document.createElement('p');
+                                errorElement.className = 'error-message text-red-600 text-sm mt-1';
+                                errorElement.textContent = messages[0];
+                                field.parentElement.appendChild(errorElement);
+                            }
+                        }
+                    }
+                }
+            }
 
             function validateField(field) {
                 const value = field.value.trim();
@@ -433,6 +590,12 @@
                     errorMessage =
                         `${getFieldLabel(field)} must be at least ${field.getAttribute('minlength')} characters`;
                 }
+                // Check maxlength for text inputs
+                else if (field.hasAttribute('maxlength') && value.length > parseInt(field.getAttribute(
+                        'maxlength'))) {
+                    errorMessage =
+                        `${getFieldLabel(field)} cannot exceed ${field.getAttribute('maxlength')} characters`;
+                }
                 // Check pattern for text inputs
                 else if (field.hasAttribute('pattern') && value) {
                     const pattern = new RegExp(field.getAttribute('pattern'));
@@ -449,7 +612,8 @@
                     errorMessage = 'Phone number cannot be all zeros';
                 }
                 // Check for select fields
-                else if (field.tagName === 'SELECT' && (value === "" || value === null)) {
+                else if (field.tagName === 'SELECT' && (value === "" || value === null || value ===
+                        "Select Gender" || value === "Select Specialty")) {
                     errorMessage = `Please select ${getFieldLabel(field)}`;
                 }
                 // Check email format
@@ -467,6 +631,14 @@
                         errorMessage = 'Date of birth cannot be in the future';
                     }
                 }
+                // Check consultation fee max value
+                else if (field.name === 'consultation_fee' && value > 100000) {
+                    errorMessage = 'Consultation fee cannot exceed ₹100,000';
+                }
+                // Check experience years max value
+                else if (field.name === 'experience_years' && value > 70) {
+                    errorMessage = 'Experience years cannot exceed 70';
+                }
 
                 if (errorMessage) {
                     // Add error styling
@@ -482,7 +654,8 @@
                     return false;
                 } else {
                     // Remove error styling
-                    clearFieldError(field);
+                    field.classList.remove('border-red-500', 'focus:ring-red-500');
+                    field.classList.add('border-gray-300', 'focus:ring-sky-500');
                     return true;
                 }
             }
@@ -495,6 +668,12 @@
                 const errorMsg = field.parentElement.querySelector('.error-message');
                 if (errorMsg) {
                     errorMsg.remove();
+                }
+
+                // Also remove server-side error message if exists
+                const serverError = field.parentElement.querySelector('.text-red-600.text-sm.mt-1');
+                if (serverError && !serverError.classList.contains('error-message')) {
+                    serverError.remove();
                 }
             }
 

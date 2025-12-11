@@ -27,7 +27,7 @@ class CheckRole
         }
 
         $user = auth()->user();
-        // this will not let user to login who's role is petient
+        // this will not let user to login who's role is Patient
 
         // if($user->role == 'patient'){
         //     if ($request->expectsJson()) {
