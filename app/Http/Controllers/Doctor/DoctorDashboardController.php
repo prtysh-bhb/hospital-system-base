@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Http\Controllers\doctor;
+namespace App\Http\Controllers\Doctor;
 
 use App\Http\Controllers\Controller;
-use App\Services\Doctor\DoctorDashboadService;
+use App\Services\Doctor\DoctorDashboardService;
 
-class DoctorDashboarController extends Controller
+class DoctorDashboardController extends Controller
 {
-    protected DoctorDashboadService $dashboardService;
+    protected DoctorDashboardService $dashboardService;
 
-    public function __construct(DoctorDashboadService $dashboardService)
+    public function __construct(DoctorDashboardService $dashboardService)
     {
         $this->dashboardService = $dashboardService;
     }

@@ -1,8 +1,8 @@
 <?php
 
-namespace App;
+namespace App\Services\Frontdesk;
 
-class AddApoimnet
+class AddAppointment
 {
     /**
      * Create a new class instance.

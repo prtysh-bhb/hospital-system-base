@@ -6,7 +6,7 @@ use App\Models\DoctorProfile;
 use App\Models\DoctorSchedule;
 use App\Models\User;
 
-class DoctoreServices
+class DoctorServices
 {
     /**
      * Create a new class instance.

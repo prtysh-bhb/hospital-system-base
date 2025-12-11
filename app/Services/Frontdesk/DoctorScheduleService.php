@@ -6,7 +6,7 @@ use App\Models\Appointment;
 use App\Models\User;
 use Carbon\Carbon;
 
-class DoctoreScheduleService
+class DoctorScheduleService
 {
     /**
      * Get doctors with their schedules for a specific date

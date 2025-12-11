@@ -6,7 +6,7 @@ use App\Models\Appointment;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
-class DoctorDashboadService
+class DoctorDashboardService
 {
     /**
      * Get dashboard statistics for the logged-in doctor
