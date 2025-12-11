@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\AppointmentController;
 use App\Http\Controllers\Admin\CalendarController as AdminCalendarController;
 use App\Http\Controllers\Admin\DoctorsController;
@@ -103,6 +104,19 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::get('/calendar/week', [AdminCalendarController::class, 'getWeekView'])->name('calendar.week');
     Route::get('/calendar/day', [AdminCalendarController::class, 'getDayView'])->name('calendar.day');
     Route::get('/appointments/{id}/details', [AdminCalendarController::class, 'getAppointmentDetails'])->name('appointments.details');
+
+    // Analytics & Reports
+    Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics');
+    Route::get('/analytics/dashboard-stats', [AnalyticsController::class, 'getDashboardStats'])->name('analytics.dashboard-stats');
+    Route::get('/analytics/appointment-trends', [AnalyticsController::class, 'getAppointmentTrends'])->name('analytics.appointment-trends');
+    Route::get('/analytics/revenue', [AnalyticsController::class, 'getRevenueAnalytics'])->name('analytics.revenue');
+    Route::get('/analytics/doctor-performance', [AnalyticsController::class, 'getDoctorPerformance'])->name('analytics.doctor-performance');
+    Route::get('/analytics/status-breakdown', [AnalyticsController::class, 'getStatusBreakdown'])->name('analytics.status-breakdown');
+    Route::get('/analytics/type-distribution', [AnalyticsController::class, 'getTypeDistribution'])->name('analytics.type-distribution');
+    Route::get('/analytics/patient-trends', [AnalyticsController::class, 'getPatientTrends'])->name('analytics.patient-trends');
+    Route::get('/analytics/specialty-distribution', [AnalyticsController::class, 'getSpecialtyDistribution'])->name('analytics.specialty-distribution');
+    Route::get('/analytics/peak-hours', [AnalyticsController::class, 'getPeakHours'])->name('analytics.peak-hours');
+    Route::get('/analytics/export', [AnalyticsController::class, 'export'])->name('analytics.export');
 });
 
 // Doctor Routes
