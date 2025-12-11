@@ -2,6 +2,7 @@
 
 namespace App\Services\Admin;
 
+use App\Events\UserPasswordGenerated;
 use App\Models\DoctorProfile;
 use App\Models\DoctorSchedule;
 use App\Models\User;
@@ -69,8 +70,8 @@ class DoctorServices
                 'status' => 'active',
             ]);
 
-            // TODO: Send email with temporary password to doctor
-            \Log::info("Doctor created with ID: {$user->id}. Temporary password should be emailed.");
+            // Fire event to send password email
+            event(new UserPasswordGenerated($user, $randomPassword, 'doctor'));
 
             // Create doctor profile
             $doctorProfile = DoctorProfile::create([

@@ -2,6 +2,8 @@
 
 namespace App\Services\Public;
 
+use App\Events\AppointmentBooked;
+use App\Events\UserPasswordGenerated;
 use App\Models\Appointment;
 use App\Models\PatientProfile;
 use App\Models\User;
@@ -61,8 +63,8 @@ class BookAppointmentService
                     'status' => 'active',
                 ]);
 
-                // TODO: Send welcome email with temporary password to patient
-                \Log::info("Patient created with ID: {$user->id}. Temporary password should be emailed.");
+                // Fire event to send password email
+                event(new UserPasswordGenerated($user, $randomPassword, 'patient'));
 
                 // Create patient profile
                 PatientProfile::create([
@@ -115,6 +117,10 @@ class BookAppointmentService
             ]);
 
             DB::commit();
+
+            // Fire event for appointment booked
+            $bookedVia = $data['booked_via'] ?? 'online';
+            event(new AppointmentBooked($appointment, $bookedVia));
 
             \Log::info('Appointment created successfully', [
                 'appointment_id' => $appointment->id,
