@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\frontdesk;
+namespace App\Http\Controllers\Frontdesk;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;

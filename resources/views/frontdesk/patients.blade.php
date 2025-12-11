@@ -405,10 +405,9 @@
                         <p class="text-xs sm:text-sm text-gray-500">${patient.phone || 'N/A'}</p>
                     </td>
                     <td class="px-3 sm:px-6 py-4 whitespace-nowrap hidden lg:table-cell">
-                        ${lastVisit ? `
-                                                                                                                                                                                <p class="text-xs sm:text-sm text-gray-900">${formatDate(lastVisit.appointment_date)}</p>
-                                                                                                                                                                                <p class="text-xs sm:text-sm text-gray-500">${lastVisit.doctor?.first_name} ${lastVisit.doctor?.last_name}</p>
-                                                                                                                                                                            ` : '<p class="text-xs sm:text-sm text-gray-500">No visits yet</p>'}
+                        ${lastVisit ? `<p class="text-xs sm:text-sm text-gray-900">${formatDate(lastVisit.appointment_date)}</p>
+                                    <p class="text-xs sm:text-sm text-gray-500">${lastVisit.doctor?.first_name ?? ''} ${lastVisit.doctor?.last_name ?? ''}</p>`
+                             : '<p class="text-xs sm:text-sm text-gray-500">No visits yet</p>'}
                     </td>
                     <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm">
                         <div class="flex gap-2">
@@ -525,12 +524,12 @@
                         <p class="text-sm text-gray-900">${patient.address || 'Not provided'}</p>
                     </div>
                     ${patient.last_appointment ? `
-                                                                                                                                                                            <div class="md:col-span-2 pt-4 border-t">
-                                                                                                                                                                                <p class="text-sm font-medium text-gray-500 mb-2">Last Appointment</p>
-                                                                                                                                                                                <p class="text-sm text-gray-900">Date: ${formatDate(patient.last_appointment.date)}</p>
-                                                                                                                                                                                <p class="text-sm text-gray-900">Doctor: ${patient.last_appointment.doctor}</p>
-                                                                                                                                                                            </div>
-                                                                                                                                                                        ` : ''}
+                                                                                                                                                                                                                            <div class="md:col-span-2 pt-4 border-t">
+                                                                                                                                                                                                                                <p class="text-sm font-medium text-gray-500 mb-2">Last Appointment</p>
+                                                                                                                                                                                                                                <p class="text-sm text-gray-900">Date: ${formatDate(patient.last_appointment.date)}</p>
+                                                                                                                                                                                                                                <p class="text-sm text-gray-900">Doctor: ${patient.last_appointment.doctor}</p>
+                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                        ` : ''}
                 </div>
 
                 <div class="flex justify-end gap-3 pt-4 border-t">

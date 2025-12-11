@@ -1,6 +1,6 @@
 <?php
 
-namespace App\services\frontdesk;
+namespace App\Services\Frontdesk;
 
 use App\Models\Appointment;
 use App\Models\User;
@@ -58,10 +58,11 @@ class DoctoreScheduleService
                     return null;
                 }
             }
-
+            
             return [
                 'id' => $doctor->id,
                 'name' => $doctor->full_name,
+                'availability_status' =>$doctor->status,
                 'specialization' => $doctor->doctorProfile->specialty->name ?? 'General',
                 'experience' => $doctor->doctorProfile->experience_years ?? 0,
                 'room' => $doctor->doctorProfile->room_number ?? 'N/A',
@@ -69,7 +70,7 @@ class DoctoreScheduleService
                 'end_time' => Carbon::parse($schedule->end_time)->format('h:i A'),
                 'available_slots' => $availableSlots,
                 'total_slots' => $totalSlots,
-                'availability_status' => $availabilityStatus,
+                // 'availability_status' => $availabilityStatus,
                 'slots' => $slots,
             ];
         })->filter(); // Remove null values

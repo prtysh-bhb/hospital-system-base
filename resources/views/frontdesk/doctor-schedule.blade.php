@@ -148,7 +148,6 @@
         // Populate specializations
 
         function populateSpecializations(specializations) {
-            console.log('spacility-------', specializations);
             const select = document.getElementById('specialty_filter');
             const currentValue = select.value;
 
@@ -180,15 +179,15 @@
 
             container.innerHTML = doctors.map(doctor => {
                 const statusColors = {
-                    available: 'bg-green-100 text-green-700 border-green-200',
-                    busy: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-                    unavailable: 'bg-red-100 text-red-700 border-red-200'
+                    active: 'bg-green-100 text-green-700 border-green-200',
+                    inactive: 'bg-red-100 text-red-700 border-red-200',
+                    suspended: 'bg-yellow-100 text-yellow-700 border-yellow-200'
                 };
 
                 const statusLabels = {
-                    available: 'Available',
-                    busy: 'Busy',
-                    unavailable: 'Unavailable'
+                    active: 'Active',
+                    inactive: 'Inactive',
+                    suspended: 'Suspended'
                 };
 
                 const slotColors = {
@@ -205,6 +204,7 @@
 
                 // Generate time slots HTML
                 const slotsHTML = doctor.slots ? doctor.slots.map(slot => {
+                    console.log('doctor data-------', doctor);
                     return `
                     <div class="p-2 sm:p-3 border-2 ${slotColors[slot.status] || 'border-gray-300 bg-gray-50 text-gray-700'} rounded-lg text-center">
                         <p class="text-xs sm:text-sm font-medium">${slot.time || 'N/A'}</p>

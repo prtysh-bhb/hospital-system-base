@@ -10,6 +10,7 @@
             <form class="space-y-4 sm:space-y-6" action="{{ route('admin.store-appointment') }}" method="post"
                 id="appointmentForm" enctype="multipart/form-data">
                 @csrf
+
                 <!-- Patient Selection -->
                 <div>
                     <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Select Patient</label>
@@ -21,16 +22,16 @@
                                 {{ $patient->phone ?? '' }}</option>
                         @endforeach
                     </select>
-
+                    <span id="patient_id_error" class="text-xs text-red-500 hidden"></span>
                 </div>
 
-
-                <!-- Patient Form - Only patient fields are inside this -->
+                <!-- Patient Form -->
                 <div id="patientForm"
                     class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mt-4 p-3 sm:p-4 bg-white rounded-lg border border-gray-200">
                     <div class="col-span-1 md:col-span-2">
                         <p class="text-xs sm:text-sm font-medium text-gray-800 mb-3">Patient Details</p>
                     </div>
+
                     <div>
                         <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">First Name <span
                                 class="text-red-600">*</span></label>
@@ -40,6 +41,7 @@
                         <span id="first_name_error" class="text-xs text-red-500 hidden"></span>
                         <span class="text-xs text-gray-400"><span id="first_name_count">0</span>/25 characters</span>
                     </div>
+
                     <div>
                         <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Last Name <span
                                 class="text-red-600">*</span></label>
@@ -48,6 +50,7 @@
                         <span id="last_name_error" class="text-xs text-red-500 hidden"></span>
                         <span class="text-xs text-gray-400"><span id="last_name_count">0</span>/25 characters</span>
                     </div>
+
                     <div>
                         <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Email <span
                                 class="text-red-600">*</span></label>
@@ -56,6 +59,7 @@
                         <span id="email_error" class="text-xs text-red-500 hidden"></span>
                         <span class="text-xs text-gray-400"><span id="email_count">0</span>/50 characters</span>
                     </div>
+
                     <div>
                         <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Phone <span
                                 class="text-red-600">*</span></label>
@@ -64,13 +68,16 @@
                         <span id="phone_error" class="text-xs text-red-500 hidden"></span>
                         <span class="text-xs text-gray-400"><span id="phone_count">0</span>/15 characters</span>
                     </div>
+
                     <div>
                         <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Date of Birth <span
                                 class="text-red-600">*</span></label>
                         <input type="date" name="date_of_birth" id="date_of_birth"
                             max="{{ now()->subDay()->format('Y-m-d') }}"
                             class="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 text-sm sm:text-base">
+                        <span id="date_of_birth_error" class="text-xs text-red-500 hidden"></span>
                     </div>
+
                     <div>
                         <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Gender <span
                                 class="text-red-600">*</span></label>
@@ -81,12 +88,15 @@
                             <option value="female">Female</option>
                             <option value="other">Other</option>
                         </select>
+                        <span id="gender_error" class="text-xs text-red-500 hidden"></span>
                     </div>
+
                     <div class="col-span-1 md:col-span-2">
                         <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Address</label>
                         <textarea name="address" id="address" rows="2" maxlength="100"
                             class="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 text-sm sm:text-base"
                             placeholder="Enter full address..."></textarea>
+                        <span id="address_error" class="text-xs text-red-500 hidden"></span>
                         <span class="text-xs text-gray-400"><span id="address_count">0</span>/100 characters</span>
                     </div>
                 </div>
@@ -95,7 +105,7 @@
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 mt-6">
                     <h3 class="text-base sm:text-lg font-semibold text-gray-800 mb-4">Appointment Details</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                        <!-- Doctor Selection -->
+
                         <div>
                             <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Select Doctor <span
                                     class="text-red-600">*</span></label>
@@ -110,6 +120,7 @@
                                     </option>
                                 @endforeach
                             </select>
+                            <span id="doctor_id_error" class="text-xs text-red-500 hidden"></span>
                         </div>
 
                         <div>
@@ -118,6 +129,7 @@
                             <input type="date" name="appointment_date" id="appointment_date"
                                 min="{{ date('Y-m-d') }}"
                                 class="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 text-sm sm:text-base">
+                            <span id="appointment_date_error" class="text-xs text-red-500 hidden"></span>
                         </div>
 
                         <div>
@@ -127,6 +139,7 @@
                                 class="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 text-sm sm:text-base">
                                 <option value="">Select date first</option>
                             </select>
+                            <span id="appointment_time_error" class="text-xs text-red-500 hidden"></span>
                         </div>
 
                         <div>
@@ -140,6 +153,7 @@
                                 <option value="emergency">Emergency</option>
                                 <option value="check_up">Check Up</option>
                             </select>
+                            <span id="appointment_type_error" class="text-xs text-red-500 hidden"></span>
                         </div>
 
                         <div>
@@ -158,6 +172,7 @@
                             <textarea name="reason_for_visit" id="reason_for_visit" rows="3" maxlength="1000"
                                 class="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 text-sm sm:text-base"
                                 placeholder="Enter reason for visit..."></textarea>
+                            <span id="reason_for_visit_error" class="text-xs text-red-500 hidden"></span>
                             <span class="text-xs text-gray-400"><span id="reason_count">0</span>/1000 characters</span>
                         </div>
 
@@ -166,544 +181,269 @@
                             <textarea name="notes" id="notes" rows="2" maxlength="500"
                                 class="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 text-sm sm:text-base"
                                 placeholder="Enter any additional notes..."></textarea>
+                            <span id="notes_error" class="text-xs text-red-500 hidden"></span>
                             <span class="text-xs text-gray-400"><span id="notes_count">0</span>/500 characters</span>
                         </div>
                     </div>
                 </div>
+
                 <!-- Action Buttons -->
                 <div class="flex flex-col sm:flex-row justify-end gap-3 sm:space-x-4 pt-4">
                     <a href="{{ route('admin.appointments') }}"
                         class="px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 text-center">Cancel</a>
-                    <button type="submit"
+                    <button type="submit" id="submitBtn"
                         class="px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-sky-600 text-white rounded-lg font-medium hover:bg-sky-700">Create
                         Appointment</button>
                 </div>
             </form>
         </div>
     </div>
+@endsection
 
-    @push('scripts')
-        <script>
-            $(document).ready(function() {
-                // ==========================================
-                // VALIDATION RULES & FUNCTIONS
-                // ==========================================
+@push('scripts')
+    <script>
+        $(document).ready(function() {
+            // Initialize character counters
+            function updateCharCount(field) {
+                const fieldId = field.attr('id');
+                const countSpan = $('#' + fieldId + '_count');
+                if (countSpan.length) {
+                    countSpan.text(field.val().length);
+                }
+            }
 
-                // Validation patterns
-                const validationPatterns = {
-                    nameOnly: /^[A-Za-z\s]+$/, // Only letters and spaces
-                    numbersOnly: /^[0-9]+$/, // Only numbers
-                    email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ // Basic email pattern
-                };
+            // Update character counts on input
+            $('#first_name, #last_name, #email, #phone, #address, #reason_for_visit, #notes').on('input',
+                function() {
+                    updateCharCount($(this));
+                });
 
-                // Validation limits
-                const limits = {
-                    firstName: 25,
-                    lastName: 25,
-                    email: 50,
-                    phone: 15,
-                    address: 100,
-                    reasonForVisit: 1000,
-                    notes: 500
-                };
-
-                // Prevent numbers in name fields (real-time)
-                function preventNumbersInName(input) {
-                    input.on('input', function() {
-                        let value = $(this).val();
-                        // Remove any numbers from the input
-                        let cleanedValue = value.replace(/[0-9]/g, '');
-                        if (value !== cleanedValue) {
-                            $(this).val(cleanedValue);
-                        }
-                        // Update character count
-                        updateCharCount($(this));
+            // Toggle patient form based on selection
+            function togglePatientForm() {
+                var pid = $('#select_patient').val();
+                if (pid && pid !== '') {
+                    $('#patientForm').hide();
+                    // Clear any existing errors in patient form
+                    $('#patientForm input, #patientForm select, #patientForm textarea').each(function() {
+                        clearFieldError($(this));
                     });
+                } else {
+                    $('#patientForm').show();
+                }
+            }
 
-                    input.on('keypress', function(e) {
-                        // Prevent number keys
-                        if (e.key >= '0' && e.key <= '9') {
-                            e.preventDefault();
-                            showFieldError($(this), 'Numbers are not allowed in name fields');
-                        }
-                    });
+            // Initialize form visibility
+            togglePatientForm();
+            $('#select_patient').on('change', togglePatientForm);
 
-                    input.on('paste', function(e) {
-                        setTimeout(() => {
-                            let value = $(this).val();
-                            let cleanedValue = value.replace(/[0-9]/g, '');
-                            $(this).val(cleanedValue);
-                            updateCharCount($(this));
-                        }, 0);
-                    });
+            // Error handling functions
+            function showFieldError(field, message) {
+                const fieldId = field.attr('id');
+                const errorSpanId = fieldId + '_error';
+                let errorSpan = $('#' + errorSpanId);
+
+                // If error span doesn't exist, try to find it
+                if (!errorSpan.length) {
+                    // Check if there's already an error span for this field
+                    errorSpan = field.siblings('span[id$="_error"]').first();
+                    if (!errorSpan.length) {
+                        // Look for error span in the parent container
+                        errorSpan = field.closest('div').find('span[id$="_error"]').first();
+                    }
                 }
 
-                // Prevent letters in phone field (real-time)
-                function preventLettersInPhone(input) {
-                    input.on('input', function() {
-                        let value = $(this).val();
-                        // Remove any non-numeric characters
-                        let cleanedValue = value.replace(/[^0-9]/g, '');
-                        if (value !== cleanedValue) {
-                            $(this).val(cleanedValue);
-                        }
-                        // Update character count
-                        updateCharCount($(this));
-                    });
-
-                    input.on('keypress', function(e) {
-                        // Allow only numbers
-                        if (!/[0-9]/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !==
-                            'Tab') {
-                            e.preventDefault();
-                            showFieldError($(this), 'Only numbers are allowed in phone field');
-                        }
-                    });
-
-                    input.on('paste', function(e) {
-                        setTimeout(() => {
-                            let value = $(this).val();
-                            let cleanedValue = value.replace(/[^0-9]/g, '');
-                            $(this).val(cleanedValue);
-                            updateCharCount($(this));
-                        }, 0);
-                    });
-                }
-
-                // Show field error
-                function showFieldError(field, message) {
-                    const errorSpan = $('#' + field.attr('id') + '_error');
+                if (errorSpan.length) {
                     errorSpan.text(message).removeClass('hidden');
+                    // Add error border to the field
                     field.addClass('border-red-500');
 
-                    // Auto-hide after 3 seconds
-                    setTimeout(() => {
-                        errorSpan.addClass('hidden');
-                        field.removeClass('border-red-500');
-                    }, 3000);
+                    // Special handling for Select2
+                    if (field.hasClass('select2-hidden-accessible')) {
+                        field.next('.select2-container').find('.select2-selection').addClass('border-red-500');
+                    }
+                } else {
+                    // Fallback: show as toast
+                    toastr.error(message);
+                }
+            }
+
+            function clearFieldError(field) {
+                const fieldId = field.attr('id');
+                let errorSpan = $('#' + fieldId + '_error');
+
+                if (!errorSpan.length) {
+                    // Try to find error span in siblings
+                    errorSpan = field.siblings('span[id$="_error"]').first();
                 }
 
-                // Hide field error
-                function hideFieldError(field) {
-                    const errorSpan = $('#' + field.attr('id') + '_error');
-                    errorSpan.addClass('hidden');
-                    field.removeClass('border-red-500');
+                if (errorSpan.length) {
+                    errorSpan.addClass('hidden').text('');
                 }
 
-                // Update character count
-                function updateCharCount(field) {
-                    const fieldId = field.attr('id');
-                    const countSpan = $('#' + fieldId + '_count');
-                    if (countSpan.length) {
-                        countSpan.text(field.val().length);
-                    }
+                // Remove error border
+                field.removeClass('border-red-500');
+
+                // Special handling for Select2
+                if (field.hasClass('select2-hidden-accessible')) {
+                    field.next('.select2-container').find('.select2-selection').removeClass('border-red-500');
                 }
+            }
 
-                // Validate email format
-                function validateEmail(email) {
-                    return validationPatterns.email.test(email);
-                }
+            // Clear errors on input
+            $(document).on('input change', 'input, select, textarea', function() {
+                clearFieldError($(this));
+            });
 
-                // Validate name field
-                function validateName(value, fieldName) {
-                    if (!value || value.trim() === '') {
-                        return {
-                            valid: false,
-                            message: fieldName + ' is required'
-                        };
+            // Clear all errors
+            function clearAllErrors() {
+                $('input, select, textarea').each(function() {
+                    clearFieldError($(this));
+                });
+            }
+
+            // Function to handle backend errors
+            function displayBackendErrors(errors) {
+                clearAllErrors();
+
+                Object.keys(errors).forEach(function(key) {
+                    // Handle special cases where field names might not match exactly
+                    let fieldName = key;
+                    let field = $('[name="' + fieldName + '"]');
+
+                    // If not found by name, try by id
+                    if (!field.length) {
+                        field = $('#' + fieldName);
                     }
-                    if (value.length < 2) {
-                        return {
-                            valid: false,
-                            message: fieldName + ' must be at least 2 characters'
-                        };
-                    }
-                    if (!validationPatterns.nameOnly.test(value)) {
-                        return {
-                            valid: false,
-                            message: fieldName + ' should only contain letters and spaces'
-                        };
-                    }
-                    return {
-                        valid: true
-                    };
-                }
 
-                // Validate phone field
-                function validatePhone(value) {
-                    if (!value || value.trim() === '') {
-                        return {
-                            valid: false,
-                            message: 'Phone number is required'
-                        };
+                    // If still not found, try common variations
+                    if (!field.length) {
+                        if (key === 'patient_id') field = $('#select_patient');
+                        else if (key === 'doctor_id') field = $('#doctor_select');
+                        else if (key === 'appointment_type') field = $('#type_select');
                     }
-                    if (!validationPatterns.numbersOnly.test(value)) {
-                        return {
-                            valid: false,
-                            message: 'Phone number must contain only digits'
-                        };
-                    }
-                    if (value.length < 10) {
-                        return {
-                            valid: false,
-                            message: 'Phone number must be at least 10 digits'
-                        };
-                    }
-                    // Check for all zeros
-                    if (/^0+$/.test(value)) {
-                        return {
-                            valid: false,
-                            message: 'Phone number cannot be all zeros'
-                        };
-                    }
-                    return {
-                        valid: true
-                    };
-                }
 
-                // ==========================================
-                // APPLY VALIDATIONS TO FIELDS
-                // ==========================================
-
-                // Apply name validation to first_name and last_name
-                preventNumbersInName($('#first_name'));
-                preventNumbersInName($('#last_name'));
-
-                // Apply phone validation
-                preventLettersInPhone($('#phone'));
-
-                // Character count for all fields with limits
-                $('#first_name, #last_name, #email, #phone, #address, #reason_for_visit, #notes').on('input',
-                    function() {
-                        updateCharCount($(this));
-                    });
-
-                // Email validation on blur
-                $('#email').on('blur', function() {
-                    const value = $(this).val();
-                    if (value && !validateEmail(value)) {
-                        showFieldError($(this), 'Please enter a valid email address');
+                    if (field.length) {
+                        showFieldError(field, errors[key][0]);
                     } else {
-                        hideFieldError($(this));
+                        // If field not found, show as toast
+                        toastr.error(errors[key][0]);
                     }
                 });
+            }
 
-                // First name validation on blur
-                $('#first_name').on('blur', function() {
-                    const result = validateName($(this).val(), 'First name');
-                    if (!result.valid && $(this).val()) {
-                        showFieldError($(this), result.message);
-                    } else {
-                        hideFieldError($(this));
-                    }
-                });
+            // Form submission with AJAX
+            $('#appointmentForm').on('submit', function(e) {
+                e.preventDefault();
 
-                // Last name validation on blur
-                $('#last_name').on('blur', function() {
-                    const result = validateName($(this).val(), 'Last name');
-                    if (!result.valid && $(this).val()) {
-                        showFieldError($(this), result.message);
-                    } else {
-                        hideFieldError($(this));
-                    }
-                });
+                // Clear previous errors
+                clearAllErrors();
 
-                // Phone validation on blur
-                $('#phone').on('blur', function() {
-                    const result = validatePhone($(this).val());
-                    if (!result.valid && $(this).val()) {
-                        showFieldError($(this), result.message);
-                    } else {
-                        hideFieldError($(this));
-                    }
-                });
+                // Show loading state
+                const submitBtn = $('#submitBtn');
+                const originalText = submitBtn.html();
+                submitBtn.prop('disabled', true).html(
+                    '<i class="fas fa-spinner fa-spin me-2"></i>Creating...'
+                );
 
-                // ==========================================
-                // FORM VALIDATION BEFORE SUBMIT
-                // ==========================================
-                function validateForm() {
-                    let isValid = true;
-                    const patientId = $('#select_patient').val();
+                let formData = new FormData(this);
 
-                    // Only validate patient fields if no patient selected
-                    if (!patientId || patientId === '') {
-                        // Validate first name
-                        const firstNameResult = validateName($('#first_name').val(), 'First name');
-                        if (!firstNameResult.valid) {
-                            showFieldError($('#first_name'), firstNameResult.message);
-                            isValid = false;
-                        }
-
-                        // Validate last name
-                        const lastNameResult = validateName($('#last_name').val(), 'Last name');
-                        if (!lastNameResult.valid) {
-                            showFieldError($('#last_name'), lastNameResult.message);
-                            isValid = false;
-                        }
-
-                        // Validate email
-                        const email = $('#email').val();
-                        if (!email || email.trim() === '') {
-                            showFieldError($('#email'), 'Email is required');
-                            isValid = false;
-                        } else if (!validateEmail(email)) {
-                            showFieldError($('#email'), 'Please enter a valid email address');
-                            isValid = false;
-                        }
-
-                        // Validate phone
-                        const phoneResult = validatePhone($('#phone').val());
-                        if (!phoneResult.valid) {
-                            showFieldError($('#phone'), phoneResult.message);
-                            isValid = false;
-                        }
-
-                        // Validate date of birth
-                        if (!$('#date_of_birth').val()) {
-                            showFieldError($('#date_of_birth'), 'Date of birth is required');
-                            isValid = false;
-                        }
-
-                        // Validate gender
-                        if (!$('#gender').val()) {
-                            toastr.error('Gender is required');
-                            isValid = false;
-                        }
-                    }
-
-                    // Validate appointment fields (always required)
-                    if (!$('#doctor_select').val()) {
-                        toastr.error('Please select a doctor');
-                        isValid = false;
-                    }
-
-                    if (!$('#appointment_date').val()) {
-                        toastr.error('Appointment date is required');
-                        isValid = false;
-                    }
-
-                    if (!$('#appointment_time').val()) {
-                        toastr.error('Appointment time is required');
-                        isValid = false;
-                    }
-
-                    if (!$('#type_select').val()) {
-                        toastr.error('Appointment type is required');
-                        isValid = false;
-                    }
-
-                    if (!$('#reason_for_visit').val() || $('#reason_for_visit').val().trim() === '') {
-                        toastr.error('Reason for visit is required');
-                        isValid = false;
-                    }
-
-                    return isValid;
-                }
-
-                // ==========================================
-                // EXISTING FUNCTIONALITY
-                // ==========================================
-
-                // Toggle patient details form when a patient is selected
-                function togglePatientForm() {
-                    var pid = $('#select_patient').val();
-                    if (pid && pid !== '') {
-                        $('#patientForm').hide();
-                        // Remove required attribute from hidden fields to prevent validation errors
-                        $('#patientForm input, #patientForm select, #patientForm textarea').prop('required', false);
-                    } else {
-                        $('#patientForm').show();
-                        // Add back required attribute when showing the form
-                        $('#first_name, #last_name, #email, #phone, #date_of_birth, #gender').prop('required', true);
-                    }
-                }
-
-                // Initialize visibility
-                togglePatientForm();
-
-                // When selection changes, toggle form
-                $('#select_patient').on('change', function() {
-                    togglePatientForm();
-                });
-
-                // Initialize Select2 for doctor select with clear option
-                $('#doctor_select').select2({
-                    placeholder: 'Search or select doctor...',
-                    allowClear: false,
-                    width: '100%'
-                });
-
-                // Initialize Select2 for type select with clear option
-                $('#type_select').select2({
-                    placeholder: 'Select type...',
-                    allowClear: false,
-                    width: '100%'
-                });
-
-                // Initialize Select2 for patient select (allow clearing to show create form)
-                $('#select_patient').select2({
-                    placeholder: 'Search or select patient...',
-                    allowClear: true,
-                    width: '100%'
-                });
-
-                // When user clicks "Create new patient" show the patient form and clear selection
-                $('#createNewPatientBtn').on('click', function() {
-                    $('#select_patient').val(null).trigger('change');
-                    $('#patientForm').show();
-                });
-
-                // Load available time slots when doctor and date are selected
-                function loadAvailableSlots() {
-                    const doctorId = $('#doctor_select').val();
-                    const date = $('#appointment_date').val();
-                    const timeSelect = $('#appointment_time');
-
-                    if (!doctorId || !date) {
-                        timeSelect.html('<option value="">Select doctor and date first</option>');
-                        return;
-                    }
-
-                    timeSelect.html('<option value="">Loading slots...</option>').prop('disabled', true);
-
-                    $.ajax({
-                        url: '{{ route('admin.get-available-slots') }}',
-                        method: 'GET',
-                        data: {
-                            doctor_id: doctorId,
-                            date: date
-                        },
-                        success: function(response) {
-                            timeSelect.prop('disabled', false);
-                            if (response.success && response.slots && response.slots.length > 0) {
-                                let options = '<option value="">Select Time</option>';
-                                const selectedDate = new Date(date);
-                                const today = new Date();
-                                const isToday = selectedDate.toDateString() === today.toDateString();
-                                const currentTime = today.getHours() * 60 + today.getMinutes();
-
-                                response.slots.forEach(function(slot) {
-                                    let isPast = false;
-
-                                    if (isToday) {
-                                        // Parse time from slot (format: "HH:MM AM/PM" or "HH:MM")
-                                        const timeMatch = slot.match(
-                                            /(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
-                                        if (timeMatch) {
-                                            let hours = parseInt(timeMatch[1]);
-                                            const minutes = parseInt(timeMatch[2]);
-                                            const meridiem = timeMatch[3];
-
-                                            // Convert to 24-hour format if AM/PM present
-                                            if (meridiem) {
-                                                if (meridiem.toUpperCase() === 'PM' && hours !==
-                                                    12) {
-                                                    hours += 12;
-                                                } else if (meridiem.toUpperCase() === 'AM' &&
-                                                    hours === 12) {
-                                                    hours = 0;
-                                                }
-                                            }
-
-                                            const slotTime = hours * 60 + minutes;
-                                            isPast = slotTime <= currentTime;
-                                        }
-                                    }
-
-                                    if (!isPast) {
-                                        options += `<option value="${slot}">${slot}</option>`;
-                                    }
-                                });
-
-                                if (options === '<option value="">Select Time</option>') {
-                                    timeSelect.html(
-                                        '<option value="">No available slots remaining for today</option>'
-                                    );
-                                } else {
-                                    timeSelect.html(options);
-                                }
-                            } else {
-                                timeSelect.html(
-                                    '<option value="">No slots available for this date</option>');
-                            }
-                        },
-                        error: function() {
-                            timeSelect.html('<option value="">Error loading slots</option>').prop(
-                                'disabled', false);
-                        }
-                    });
-                }
-
-                // Trigger slot loading when doctor or date changes
-                $('#doctor_select, #appointment_date').on('change', function() {
-                    loadAvailableSlots();
-                });
-
-                $('#appointmentForm').on('submit', function(e) {
-                    e.preventDefault();
-
-                    // Validate form before submitting
-                    if (!validateForm()) {
-                        return false;
-                    }
-
-                    // When user selected existing patient, form includes patient_id.
-                    // When no patient selected, include patient form fields so backend can create patient.
-                    var formData = new FormData(this);
-
-                    // Show loading state
-                    const submitBtn = $(this).find('button[type="submit"]');
-                    const originalText = submitBtn.html();
-                    submitBtn.prop('disabled', true).html(
-                        '<i class="fas fa-spinner fa-spin me-2"></i>Processing...');
-
-                    $.ajax({
-                        url: $(this).attr('action'),
-                        data: formData,
-                        type: $(this).attr('method') || 'POST',
-                        contentType: false,
-                        cache: false,
-                        processData: false,
-                        headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        success: function(response) {
-                            try {
-                                if (response.status == 200) {
-                                    toastr.success(response.msg);
-                                    setTimeout(function() {
-                                        window.location.href =
-                                            "{{ route('admin.appointments') }}";
-                                    }, 200);
-                                } else {
-                                    toastr.error(response.msg);
-                                    submitBtn.prop('disabled', false).html(originalText);
-                                }
-                            } catch (e) {
-                                toastr.error("An error occurred while processing the response.");
-                                console.error(e);
-                                submitBtn.prop('disabled', false).html(originalText);
-                            }
-                        },
-                        error: function(xhr, status, error) {
-                            try {
-                                if (xhr.status === 422) {
-                                    let errors = xhr.responseJSON.errors;
-                                    Object.keys(errors).forEach(function(key) {
-                                        toastr.error(errors[key][0]);
-                                    });
-                                } else {
-                                    toastr.error("An error occurred: " + error);
-                                }
-                            } catch (e) {
-                                toastr.error("A server error occurred.");
-                                console.error(e);
-                            }
+                $.ajax({
+                    url: $(this).attr('action'),
+                    type: "POST",
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        if (response.status === 200) {
+                            toastr.success(response.msg);
+                            setTimeout(() => {
+                                window.location.href =
+                                    "{{ route('admin.appointments') }}";
+                            }, 1500);
+                        } else {
+                            toastr.error(response.msg || 'Something went wrong');
                             submitBtn.prop('disabled', false).html(originalText);
                         }
-                    });
+                    },
+                    error: function(xhr) {
+                        submitBtn.prop('disabled', false).html(originalText);
+
+                        if (xhr.status === 422) {
+                            // Validation errors from backend
+                            let errors = xhr.responseJSON.errors;
+                            if (errors) {
+                                displayBackendErrors(errors);
+                                // toastr.error('Please fix the validation errors.');
+                            }
+                        } else if (xhr.status === 400) {
+                            // Other errors
+                            let errorMsg = xhr.responseJSON.msg ||
+                                'Something went wrong. Please try again.';
+                            toastr.error(errorMsg);
+                        } else {
+                            toastr.error('An unexpected error occurred. Please try again.');
+                        }
+                    }
                 });
             });
-        </script>
-    @endpush
-@endsection
+
+            // Select2 initialization (if needed)
+            $('#select_patient, #doctor_select, #type_select').select2({
+                placeholder: function() {
+                    return $(this).data('placeholder') || 'Select...';
+                },
+                allowClear: true,
+                width: '100%'
+            });
+
+            // Load time slots function (from your existing code)
+            function loadAvailableSlots() {
+                const doctorId = $('#doctor_select').val();
+                const date = $('#appointment_date').val();
+                const timeSelect = $('#appointment_time');
+
+                if (!doctorId || !date) {
+                    timeSelect.html('<option value="">Select doctor and date first</option>');
+                    return;
+                }
+
+                timeSelect.html('<option value="">Loading slots...</option>').prop('disabled', true);
+
+                $.ajax({
+                    url: '{{ route('admin.get-available-slots') }}',
+                    method: 'GET',
+                    data: {
+                        doctor_id: doctorId,
+                        date: date
+                    },
+                    success: function(response) {
+                        timeSelect.prop('disabled', false);
+                        if (response.success && response.slots && response.slots.length > 0) {
+                            let options = '<option value="">Select Time</option>';
+                            response.slots.forEach(function(slot) {
+                                options += `<option value="${slot}">${slot}</option>`;
+                            });
+                            timeSelect.html(options);
+                        } else {
+                            timeSelect.html(
+                                '<option value="">No slots available for this date</option>');
+                        }
+                    },
+                    error: function() {
+                        timeSelect.html('<option value="">Error loading slots</option>').prop(
+                            'disabled', false);
+                    }
+                });
+            }
+
+            // Load slots when doctor or date changes
+            $('#doctor_select, #appointment_date').on('change', function() {
+                clearFieldError($(this));
+                loadAvailableSlots();
+            });
+        });
+    </script>
+@endpush

@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\frontdesk;
+namespace App\Http\Controllers\Frontdesk;
 
 use App\Http\Controllers\Controller;
-use App\services\frontdesk\HistoryService;
+use App\Services\Frontdesk\HistoryService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -126,7 +126,6 @@ class HistoryController extends Controller
                     'patient_phone' => $appointment->patient->phone,
                     'doctor_name' => $appointment->doctor->full_name,
                     'appointment_date' => Carbon::parse($appointment->appointment_date)->format('M d, Y'),
-                    'appointment_date' => $appointment->appointment_date->format('M d, Y'),
                     'appointment_time' => Carbon::parse($appointment->appointment_time)->format('h:i A'),
                     'status' => $appointment->status,
                     'appointment_type' => $appointment->appointment_type,
@@ -134,6 +133,7 @@ class HistoryController extends Controller
                     'symptoms' => $appointment->symptoms,
                     'notes' => $appointment->notes,
                     'cancellation_reason' => $appointment->cancellation_reason,
+                    'specialization' => $appointment->doctor->doctorProfile->specialty->name ?? 'N/A',
                 ],
             ]);
         } catch (\Exception $e) {

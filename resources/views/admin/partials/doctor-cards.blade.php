@@ -85,15 +85,18 @@
                             @endif
 
                             <!-- Availability Indicator -->
-                            @if ($doctor->available_for_booking)
-                                <div
-                                    class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white">
-                                </div>
-                            @else
-                                <div
-                                    class="absolute -bottom-1 -right-1 w-4 h-4 bg-gray-300 rounded-full border-2 border-white">
-                                </div>
-                            @endif
+                            @php
+                                $statusColor = match ($doctor->user->status) {
+                                    'active' => 'bg-emerald-500', // green
+                                    'inactive' => 'bg-gray-300', // gray
+                                    'suspended' => 'bg-amber-500', // amber/yellow
+                                    default => 'bg-gray-300',
+                                };
+                            @endphp
+
+                            <div
+                                class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white {{ $statusColor }}">
+                            </div>
                         </div>
 
                         <!-- Doctor Info -->

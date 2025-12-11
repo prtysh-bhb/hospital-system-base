@@ -1,6 +1,6 @@
 <?php
 
-namespace App\services\frontdesk;
+namespace App\Services\Frontdesk;
 
 use App\Models\Appointment;
 use Carbon\Carbon;
@@ -182,7 +182,7 @@ class HistoryService
     {
         return Appointment::with([
             'patient.patientProfile',
-            'doctor.doctorProfile',
+            'doctor.doctorProfile.specialty',
             'prescriptions',
         ])->findOrFail($id);
     }

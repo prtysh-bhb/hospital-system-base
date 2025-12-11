@@ -4,7 +4,8 @@
 
     <!-- Patient Selection -->
     <div>
-        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Select Patient *</label>
+        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Select Patient <span
+                class="text-red-600">*</span></label>
         <select id="edit_select_patient" name="patient_id"
             class="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-600 focus:border-transparent">
             <option>Search or select patient...</option>
@@ -19,7 +20,8 @@
 
     <!-- Doctor Selection -->
     <div>
-        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Select Doctor *</label>
+        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Select Doctor <span
+                class="text-red-600">*</span></label>
         <select id="edit_doctor_select" name="doctor_id"
             class="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-600 focus:border-transparent">
             <option>Search or select doctor...</option>
@@ -36,14 +38,16 @@
     <!-- Date & Time -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
         <div>
-            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Appointment Date *</label>
+            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Appointment Date <span
+                    class="text-red-600">*</span></label>
             <input type="date" id="edit_appointment_date" name="appointment_date"
                 value="{{ $appointment ? $appointment->appointment_date->format('Y-m-d') : '' }}"
                 min="{{ date('Y-m-d') }}"
                 class="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-600 focus:border-transparent">
         </div>
         <div>
-            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Appointment Time *</label>
+            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Appointment Time <span
+                    class="text-red-600">*</span></label>
             <select id="edit_appointment_time" name="appointment_time"
                 class="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-600 focus:border-transparent">
                 <option value="">Select doctor and date first...</option>
@@ -60,7 +64,8 @@
 
     <!-- Appointment Type -->
     <div>
-        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Appointment Type *</label>
+        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Appointment Type <span
+                class="text-red-600">*</span></label>
         <select id="edit_type_select" name="appointment_type"
             class="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-600 focus:border-transparent">
             <option>Select type...</option>
@@ -80,7 +85,8 @@
 
     <!-- Reason -->
     <div>
-        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Reason for Visit *</label>
+        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Reason for Visit <span
+                class="text-red-600">*</span></label>
         <textarea id="edit_reason_for_visit" name="reason_for_visit"
             class="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-600 focus:border-transparent"
             rows="4" placeholder="Enter reason for visit or symptoms">{{ $appointment ? $appointment->reason_for_visit : '' }}</textarea>
@@ -184,7 +190,7 @@
 
             fetch(
                     `{{ route('admin.get-available-slots') }}?doctor_id=${doctorId}&date=${date}&exclude_appointment_id=${appointmentId}`
-                    )
+                )
                 .then(response => response.json())
                 .then(data => {
                     timeSelect.disabled = false;
@@ -194,7 +200,7 @@
 
                         // Check if we should include original time
                         const isOriginalDoctorAndDate = (doctorId == originalDoctorId) && (date ==
-                        originalDate);
+                            originalDate);
                         let originalTimeIncluded = false;
 
                         // Check if original time is in the past (for today)
@@ -246,7 +252,7 @@
 
                         // If same doctor/date, still allow original time ONLY if not past
                         const isOriginalDoctorAndDate = (doctorId == originalDoctorId) && (date ==
-                        originalDate);
+                            originalDate);
                         const isOriginalTimePast = isTimePast(originalTime, date);
 
                         if (isOriginalDoctorAndDate && originalTime && !isOriginalTimePast) {

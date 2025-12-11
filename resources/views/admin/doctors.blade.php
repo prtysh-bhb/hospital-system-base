@@ -210,6 +210,7 @@
                     <option value="">All Status</option>
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
+                    <option value="suspended">Suspended</option>
                 </select>
             </div>
         </div>
@@ -333,7 +334,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        toastr.success(data.message, 'success');
+                        toastr.success(data.message);
                         fetchDoctors();
                         document.getElementById('customDeleteModal').classList.add('hidden');
                     } else {
