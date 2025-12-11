@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Frontdesk;
 
 use App\Http\Controllers\Controller;
-use App\Services\Frontdesk\DoctoreScheduleService;
+use App\Services\Frontdesk\DoctorScheduleService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -11,7 +11,7 @@ class DoctorScheduleController extends Controller
 {
     protected $scheduleService;
 
-    public function __construct(DoctoreScheduleService $scheduleService)
+    public function __construct(DoctorScheduleService $scheduleService)
     {
         $this->scheduleService = $scheduleService;
     }

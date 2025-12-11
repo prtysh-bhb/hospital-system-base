@@ -44,19 +44,25 @@ class BookAppointmentService
                 ->first();
 
             if (! $user) {
+                // Generate secure random password for patient
+                $randomPassword = \Str::random(10);
+
                 // Create new user
                 $user = User::create([
                     'first_name' => $data['first_name'],
                     'last_name' => $data['last_name'],
                     'email' => $data['email'],
                     'phone' => $data['phone'],
-                    'password' => Hash::make($data['phone']), // Password is phone number
+                    'password' => Hash::make($randomPassword),
                     'date_of_birth' => $data['date_of_birth'],
                     'gender' => $data['gender'],
                     'address' => $data['address'] ?? null,
                     'role' => 'patient',
                     'status' => 'active',
                 ]);
+
+                // TODO: Send welcome email with temporary password to patient
+                \Log::info("Patient created with ID: {$user->id}. Temporary password should be emailed.");
 
                 // Create patient profile
                 PatientProfile::create([

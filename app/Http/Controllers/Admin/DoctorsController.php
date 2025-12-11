@@ -1,19 +1,21 @@
 <?php
 
-namespace App\Http\Controllers\admin;
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Specialty;
-use App\Services\admin\DoctoreServices;
+use App\Services\Admin\DoctorServices;
 use Illuminate\Http\Request;
+use App\Models\Appointment;
+use App\Models\DoctorSchedule;
 
-class docktorsController extends Controller
+class DoctorsController extends Controller
 {
-    protected DoctoreServices $doctoreServices;
+    protected DoctorServices $doctorServices;
 
-    public function __construct(DoctoreServices $doctoreServices)
+    public function __construct(DoctorServices $doctorServices)
     {
-        $this->doctoreServices = $doctoreServices;
+        $this->doctorServices = $doctorServices;
     }
 
     public function index(Request $request)
@@ -27,12 +29,12 @@ class docktorsController extends Controller
                 'status' => $request->input('status'),
             ];
 
-            $doctors = $this->doctoreServices->getDoctors($filters);
+            $doctors = $this->doctorServices->getDoctors($filters);
 
             return view('admin.partials.doctor-cards', compact('doctors'))->render();
         }
 
-        $doctors = $this->doctoreServices->getDoctors();
+        $doctors = $this->doctorServices->getDoctors();
 
         return view('admin.doctors', compact('doctors', 'specialties'));
     }
@@ -89,10 +91,19 @@ class docktorsController extends Controller
         ]);
 
         // Custom validation for schedule times
-        if (! empty($validated['schedules'])) {
+        if (!empty($validated['schedules'])) {
             foreach ($validated['schedules'] as $day => $schedule) {
-                if (! empty($schedule['enabled']) && isset($schedule['start_time']) && isset($schedule['end_time'])) {
+                if (!empty($schedule['enabled']) && isset($schedule['start_time']) && isset($schedule['end_time'])) {
                     if (strtotime($schedule['end_time']) <= strtotime($schedule['start_time'])) {
+                        if ($request->ajax() || $request->wantsJson()) {
+                            return response()->json([
+                                'success' => false,
+                                'message' => 'Validation failed',
+                                'errors' => [
+                                    "schedules.{$day}.end_time" => ['End time must be after start time for this day.']
+                                ]
+                            ], 422);
+                        }
                         return back()->withInput()->withErrors([
                             "schedules.{$day}.end_time" => 'End time must be after start time for this day.',
                         ]);
@@ -104,24 +115,26 @@ class docktorsController extends Controller
         // Handle profile image upload
         if ($request->hasFile('profile_image')) {
             $image = $request->file('profile_image');
-            $imageName = time().'_'.$image->getClientOriginalName();
+            $imageName = time() . '_' . $image->getClientOriginalName();
             $image->move(public_path('uploads/doctors'), $imageName);
-            $validated['profile_image'] = 'uploads/doctors/'.$imageName;
+            $validated['profile_image'] = 'uploads/doctors/' . $imageName;
         }
 
         try {
-            $doctor = $this->doctoreServices->createDoctor($validated);
+            $doctor = $this->doctorServices->createDoctor($validated);
 
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Doctor added successfully!',
+                    'message' => 'Doctor created successfully!',
                     'doctor' => $doctor,
+                    'redirect_url' => route('admin.doctors')
                 ]);
             }
 
             return redirect()->route('admin.doctors')
-                ->with('success', 'Doctor added successfully!');
+                ->with('success', 'Doctor created successfully');
+
         } catch (\Exception $e) {
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
@@ -138,7 +151,7 @@ class docktorsController extends Controller
 
     public function show(Request $request, $id)
     {
-        $doctor = $this->doctoreServices->getDoctorById($id);
+        $doctor = $this->doctorServices->getDoctorById($id);
 
         if (! $doctor) {
             if ($request->ajax() || $request->wantsJson()) {
@@ -150,17 +163,17 @@ class docktorsController extends Controller
         }
 
         // Load schedules for the doctor
-        $schedules = \App\Models\DoctorSchedule::where('doctor_id', $id)
+        $schedules = DoctorSchedule::where('doctor_id', $id)
             ->where('is_available', true)
             ->orderBy('day_of_week')
             ->get();
 
         // Get appointment statistics
-        $totalAppointments = \App\Models\Appointment::where('doctor_id', $id)->count();
-        $completedAppointments = \App\Models\Appointment::where('doctor_id', $id)
+        $totalAppointments = Appointment::where('doctor_id', $id)->count();
+        $completedAppointments = Appointment::where('doctor_id', $id)
             ->where('status', 'completed')
             ->count();
-        $upcomingAppointments = \App\Models\Appointment::where('doctor_id', $id)
+        $upcomingAppointments = Appointment::where('doctor_id', $id)
             ->whereIn('status', ['scheduled', 'confirmed'])
             ->where('appointment_date', '>=', now()->toDateString())
             ->count();
@@ -213,7 +226,7 @@ class docktorsController extends Controller
 
     public function edit(Request $request, $id)
     {
-        $doctor = $this->doctoreServices->getDoctorById($id);
+        $doctor = $this->doctorServices->getDoctorById($id);
 
         if (! $doctor) {
             if ($request->ajax()) {
@@ -235,8 +248,8 @@ class docktorsController extends Controller
         $rules = [
             'first_name' => 'required|string|min:2|max:25|regex:/^[a-zA-Z\s]+$/',
             'last_name' => 'required|string|min:2|max:25|regex:/^[a-zA-Z\s]+$/',
-            'email' => 'required|email|max:50|unique:users,email,'.$id,
-            'phone' => ['required', 'regex:/^[0-9]{10,15}$/', 'unique:users,phone,'.$id, 'not_regex:/^0+$/'],
+            'email' => 'required|email|max:50|unique:users,email,' . $id,
+            'phone' => ['required', 'regex:/^[0-9]{10,15}$/', 'unique:users,phone,' . $id, 'not_regex:/^0+$/'],
             'date_of_birth' => 'required|date|before:today',
             'gender' => 'required|in:male,female,other',
             'address' => 'required|string|min:10|max:500',
@@ -248,7 +261,7 @@ class docktorsController extends Controller
             'consultation_fee' => 'required|numeric|min:0|max:100000',
             'slot_duration' => 'required|integer|in:15,30,45,60',
             'languages' => 'nullable|string|max:255',
-            'status' => 'nullable|in:active,inactive',
+            'status' => 'nullable|in:active,inactive,suspended',
             'available_for_booking' => 'nullable|in:0,1',
             'schedules' => 'nullable|array',
             'schedules.*.enabled' => 'nullable|in:0,1',
@@ -278,14 +291,31 @@ class docktorsController extends Controller
         } catch (\Illuminate\Validation\ValidationException $e) {
             \Log::error('Validation failed: ', $e->errors());
 
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+
             return back()->withErrors($e->errors())->withInput();
         }
 
         // Custom validation for schedule times
-        if (! empty($validated['schedules'])) {
+        if (!empty($validated['schedules'])) {
             foreach ($validated['schedules'] as $day => $schedule) {
-                if (! empty($schedule['enabled']) && $schedule['enabled'] == '1' && isset($schedule['start_time']) && isset($schedule['end_time'])) {
+                if (!empty($schedule['enabled']) && $schedule['enabled'] == '1' && isset($schedule['start_time']) && isset($schedule['end_time'])) {
                     if (strtotime($schedule['end_time']) <= strtotime($schedule['start_time'])) {
+                        if ($request->ajax() || $request->wantsJson()) {
+                            return response()->json([
+                                'success' => false,
+                                'message' => 'Validation failed',
+                                'errors' => [
+                                    "schedules.{$day}.end_time" => ['End time must be after start time for this day.']
+                                ]
+                            ], 422);
+                        }
                         return back()->withInput()->withErrors([
                             "schedules.{$day}.end_time" => 'End time must be after start time for this day.',
                         ]);
@@ -297,29 +327,31 @@ class docktorsController extends Controller
         // Handle profile image upload
         if ($request->hasFile('profile_image')) {
             $image = $request->file('profile_image');
-            $imageName = time().'_'.$image->getClientOriginalName();
+            $imageName = time() . '_' . $image->getClientOriginalName();
             $image->move(public_path('uploads/doctors'), $imageName);
-            $validated['profile_image'] = 'uploads/doctors/'.$imageName;
+            $validated['profile_image'] = 'uploads/doctors/' . $imageName;
         }
 
         try {
-            $doctor = $this->doctoreServices->updateDoctor($id, $validated);
+            $doctor = $this->doctorServices->updateDoctor($id, $validated);
 
-            \Log::info('Doctor updated successfully: '.$id);
+            \Log::info('Doctor updated successfully: ' . $id);
 
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Doctor updated successfully!',
                     'doctor' => $doctor,
+                    'redirect_url' => route('admin.doctors')
                 ]);
             }
 
             return redirect()->route('admin.doctors')
                 ->with('success', 'Doctor updated successfully!');
+
         } catch (\Exception $e) {
-            \Log::error('Doctor update failed: '.$e->getMessage());
-            \Log::error('Stack trace: '.$e->getTraceAsString());
+            \Log::error('Doctor update failed: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
 
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
@@ -330,14 +362,14 @@ class docktorsController extends Controller
             }
 
             return back()->withInput()
-                ->withErrors(['error' => 'Failed to update doctor: '.$e->getMessage()]);
+                ->with('error', 'Failed to update doctor: ' . $e->getMessage());
         }
     }
 
     public function destroy(Request $request, $id)
     {
         try {
-            $User = $this->doctoreServices->deleteDoctor($id);
+            $User = $this->doctorServices->deleteDoctor($id);
 
             if ($User) {
                 if ($request->ajax() || $request->wantsJson()) {
