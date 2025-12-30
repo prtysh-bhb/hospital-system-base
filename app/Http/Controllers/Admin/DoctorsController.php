@@ -3,19 +3,19 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Specialty;
-use App\Services\Admin\DoctorServices;
-use Illuminate\Http\Request;
 use App\Models\Appointment;
 use App\Models\DoctorSchedule;
+use App\Models\Specialty;
+use App\Services\Admin\DoctoreServices;
+use Illuminate\Http\Request;
 
 class DoctorsController extends Controller
 {
-    protected DoctorServices $doctorServices;
+    protected DoctoreServices $doctoreServices;
 
-    public function __construct(DoctorServices $doctorServices)
+    public function __construct(DoctoreServices $doctoreServices)
     {
-        $this->doctorServices = $doctorServices;
+        $this->doctoreServices = $doctoreServices;
     }
 
     public function index(Request $request)
@@ -29,12 +29,12 @@ class DoctorsController extends Controller
                 'status' => $request->input('status'),
             ];
 
-            $doctors = $this->doctorServices->getDoctors($filters);
+            $doctors = $this->doctoreServices->getDoctors($filters);
 
             return view('admin.partials.doctor-cards', compact('doctors'))->render();
         }
 
-        $doctors = $this->doctorServices->getDoctors();
+        $doctors = $this->doctoreServices->getDoctors();
 
         return view('admin.doctors', compact('doctors', 'specialties'));
     }
@@ -55,6 +55,7 @@ class DoctorsController extends Controller
         $validated = $request->validate([
             'first_name' => 'required|string|min:2|max:25|regex:/^[a-zA-Z\s]+$/',
             'last_name' => 'required|string|min:2|max:25|regex:/^[a-zA-Z\s]+$/',
+            'username' => 'required|string|min:2|max:25|regex:/^[a-zA-Z\s]+$/',
             'email' => 'required|email|max:50|unique:users,email',
             'phone' => ['required', 'regex:/^[0-9]{10,15}$/', 'unique:users,phone', 'not_regex:/^0+$/'],
             'date_of_birth' => 'required|date|before:today',
@@ -75,6 +76,9 @@ class DoctorsController extends Controller
         ], [
             'first_name.regex' => 'First name can only contain letters and spaces.',
             'first_name.min' => 'First name must be at least 2 characters.',
+            'username.regex' => 'User name can only contain letters and spaces.',
+            'username.min' => 'User name must be at least 2 characters.',
+            'username.max' => 'User name cannot exceed 25 characters.',
             'first_name.max' => 'First name cannot exceed 25 characters.',
             'last_name.regex' => 'Last name can only contain letters and spaces.',
             'last_name.min' => 'Last name must be at least 2 characters.',
@@ -91,19 +95,20 @@ class DoctorsController extends Controller
         ]);
 
         // Custom validation for schedule times
-        if (!empty($validated['schedules'])) {
+        if (! empty($validated['schedules'])) {
             foreach ($validated['schedules'] as $day => $schedule) {
-                if (!empty($schedule['enabled']) && isset($schedule['start_time']) && isset($schedule['end_time'])) {
+                if (! empty($schedule['enabled']) && isset($schedule['start_time']) && isset($schedule['end_time'])) {
                     if (strtotime($schedule['end_time']) <= strtotime($schedule['start_time'])) {
                         if ($request->ajax() || $request->wantsJson()) {
                             return response()->json([
                                 'success' => false,
                                 'message' => 'Validation failed',
                                 'errors' => [
-                                    "schedules.{$day}.end_time" => ['End time must be after start time for this day.']
-                                ]
+                                    "schedules.{$day}.end_time" => ['End time must be after start time for this day.'],
+                                ],
                             ], 422);
                         }
+
                         return back()->withInput()->withErrors([
                             "schedules.{$day}.end_time" => 'End time must be after start time for this day.',
                         ]);
@@ -115,20 +120,20 @@ class DoctorsController extends Controller
         // Handle profile image upload
         if ($request->hasFile('profile_image')) {
             $image = $request->file('profile_image');
-            $imageName = time() . '_' . $image->getClientOriginalName();
+            $imageName = time().'_'.$image->getClientOriginalName();
             $image->move(public_path('uploads/doctors'), $imageName);
-            $validated['profile_image'] = 'uploads/doctors/' . $imageName;
+            $validated['profile_image'] = 'uploads/doctors/'.$imageName;
         }
 
         try {
-            $doctor = $this->doctorServices->createDoctor($validated);
+            $doctor = $this->doctoreServices->createDoctor($validated);
 
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Doctor created successfully!',
                     'doctor' => $doctor,
-                    'redirect_url' => route('admin.doctors')
+                    'redirect_url' => route('admin.doctors'),
                 ]);
             }
 
@@ -151,7 +156,7 @@ class DoctorsController extends Controller
 
     public function show(Request $request, $id)
     {
-        $doctor = $this->doctorServices->getDoctorById($id);
+        $doctor = $this->doctoreServices->getDoctorById($id);
 
         if (! $doctor) {
             if ($request->ajax() || $request->wantsJson()) {
@@ -187,6 +192,7 @@ class DoctorsController extends Controller
                     'id' => $doctor->user->id,
                     'full_name' => $doctor->user->full_name,
                     'first_name' => $doctor->user->first_name,
+                    'username' => $doctor->user->username,
                     'last_name' => $doctor->user->last_name,
                     'email' => $doctor->user->email,
                     'phone' => $doctor->user->phone,
@@ -226,7 +232,7 @@ class DoctorsController extends Controller
 
     public function edit(Request $request, $id)
     {
-        $doctor = $this->doctorServices->getDoctorById($id);
+        $doctor = $this->doctoreServices->getDoctorById($id);
 
         if (! $doctor) {
             if ($request->ajax()) {
@@ -248,8 +254,8 @@ class DoctorsController extends Controller
         $rules = [
             'first_name' => 'required|string|min:2|max:25|regex:/^[a-zA-Z\s]+$/',
             'last_name' => 'required|string|min:2|max:25|regex:/^[a-zA-Z\s]+$/',
-            'email' => 'required|email|max:50|unique:users,email,' . $id,
-            'phone' => ['required', 'regex:/^[0-9]{10,15}$/', 'unique:users,phone,' . $id, 'not_regex:/^0+$/'],
+            'email' => 'required|email|max:50|unique:users,email,'.$id,
+            'phone' => ['required', 'regex:/^[0-9]{10,15}$/', 'unique:users,phone,'.$id, 'not_regex:/^0+$/'],
             'date_of_birth' => 'required|date|before:today',
             'gender' => 'required|in:male,female,other',
             'address' => 'required|string|min:10|max:500',
@@ -295,7 +301,7 @@ class DoctorsController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation failed',
-                    'errors' => $e->errors()
+                    'errors' => $e->errors(),
                 ], 422);
             }
 
@@ -303,19 +309,20 @@ class DoctorsController extends Controller
         }
 
         // Custom validation for schedule times
-        if (!empty($validated['schedules'])) {
+        if (! empty($validated['schedules'])) {
             foreach ($validated['schedules'] as $day => $schedule) {
-                if (!empty($schedule['enabled']) && $schedule['enabled'] == '1' && isset($schedule['start_time']) && isset($schedule['end_time'])) {
+                if (! empty($schedule['enabled']) && $schedule['enabled'] == '1' && isset($schedule['start_time']) && isset($schedule['end_time'])) {
                     if (strtotime($schedule['end_time']) <= strtotime($schedule['start_time'])) {
                         if ($request->ajax() || $request->wantsJson()) {
                             return response()->json([
                                 'success' => false,
                                 'message' => 'Validation failed',
                                 'errors' => [
-                                    "schedules.{$day}.end_time" => ['End time must be after start time for this day.']
-                                ]
+                                    "schedules.{$day}.end_time" => ['End time must be after start time for this day.'],
+                                ],
                             ], 422);
                         }
+
                         return back()->withInput()->withErrors([
                             "schedules.{$day}.end_time" => 'End time must be after start time for this day.',
                         ]);
@@ -327,22 +334,22 @@ class DoctorsController extends Controller
         // Handle profile image upload
         if ($request->hasFile('profile_image')) {
             $image = $request->file('profile_image');
-            $imageName = time() . '_' . $image->getClientOriginalName();
+            $imageName = time().'_'.$image->getClientOriginalName();
             $image->move(public_path('uploads/doctors'), $imageName);
-            $validated['profile_image'] = 'uploads/doctors/' . $imageName;
+            $validated['profile_image'] = 'uploads/doctors/'.$imageName;
         }
 
         try {
-            $doctor = $this->doctorServices->updateDoctor($id, $validated);
+            $doctor = $this->doctoreServices->updateDoctor($id, $validated);
 
-            \Log::info('Doctor updated successfully: ' . $id);
+            \Log::info('Doctor updated successfully: '.$id);
 
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Doctor updated successfully!',
                     'doctor' => $doctor,
-                    'redirect_url' => route('admin.doctors')
+                    'redirect_url' => route('admin.doctors'),
                 ]);
             }
 
@@ -350,8 +357,8 @@ class DoctorsController extends Controller
                 ->with('success', 'Doctor updated successfully!');
 
         } catch (\Exception $e) {
-            \Log::error('Doctor update failed: ' . $e->getMessage());
-            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            \Log::error('Doctor update failed: '.$e->getMessage());
+            \Log::error('Stack trace: '.$e->getTraceAsString());
 
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
@@ -362,14 +369,14 @@ class DoctorsController extends Controller
             }
 
             return back()->withInput()
-                ->with('error', 'Failed to update doctor: ' . $e->getMessage());
+                ->with('error', 'Failed to update doctor: '.$e->getMessage());
         }
     }
 
     public function destroy(Request $request, $id)
     {
         try {
-            $User = $this->doctorServices->deleteDoctor($id);
+            $User = $this->doctoreServices->deleteDoctor($id);
 
             if ($User) {
                 if ($request->ajax() || $request->wantsJson()) {

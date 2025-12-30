@@ -13,7 +13,7 @@
                 class="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-sky-600 rounded-2xl mb-3 sm:mb-4">
                 <svg class="w-8 h-8 sm:w-10 sm:h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        d="M4.318 6.318a4.5 4.5 0000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
             </div>
             <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">MediCare HMS</h1>
@@ -29,13 +29,13 @@
 
             <form id="login-form">
                 @csrf
-                <!-- Email -->
+                <!-- Username -->
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-                    <input type="email" name="email" id="email" placeholder="admin@hospital.com"
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                    <input type="text" name="username" id="username" placeholder="Enter your username"
                         class="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent"
                         required>
-                    <span class="text-red-500 text-xs mt-1 hidden" id="email-error"></span>
+                    <span class="text-red-500 text-xs mt-1 hidden" id="username-error"></span>
                 </div>
 
                 <!-- Password -->
@@ -129,9 +129,9 @@
 
             // Clear error messages
             function clearErrors() {
-                document.getElementById('email-error').classList.add('hidden');
+                document.getElementById('username-error').classList.add('hidden');
                 document.getElementById('password-error').classList.add('hidden');
-                document.getElementById('email').classList.remove('border-red-500');
+                document.getElementById('username').classList.remove('border-red-500');
                 document.getElementById('password').classList.remove('border-red-500');
             }
 
@@ -176,7 +176,7 @@
                 // Get form data
                 const formData = new FormData(loginForm);
                 const data = {
-                    email: formData.get('email'),
+                    username: formData.get('username'),
                     password: formData.get('password'),
                     remember: formData.get('remember') ? true : false
                 };
@@ -231,9 +231,9 @@
             });
 
             // Clear error on input
-            document.getElementById('email').addEventListener('input', () => {
-                document.getElementById('email-error').classList.add('hidden');
-                document.getElementById('email').classList.remove('border-red-500');
+            document.getElementById('username').addEventListener('input', () => {
+                document.getElementById('username-error').classList.add('hidden');
+                document.getElementById('username').classList.remove('border-red-500');
             });
 
             document.getElementById('password').addEventListener('input', () => {

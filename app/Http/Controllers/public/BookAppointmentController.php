@@ -5,10 +5,11 @@ namespace App\Http\Controllers\public;
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\DoctorSchedule;
+use App\Models\Setting;
 use App\Models\Specialty;
 use App\Models\User;
 use App\Services\AppointmentSlotService;
-use App\Services\public\BookAppointmentService;
+use App\Services\Public\BookAppointmentService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
@@ -49,7 +50,7 @@ class BookAppointmentController extends Controller
             if (! session()->has('doctor_id')) {
                 return redirect()->route('booking', ['step' => 1]);
             }
-
+            $publicAdvanceBookingDays = Setting::getValue('appointment_booking_days', 30);
             $doctor_id = session('doctor_id');
             $doctor = User::with('doctorProfile.specialty')->find($doctor_id);
 
@@ -95,7 +96,8 @@ class BookAppointmentController extends Controller
                 'selectedDate',
                 'specialties',
                 'doctors',
-                'specialty_id'
+                'specialty_id',
+                'publicAdvanceBookingDays'
             ));
         }
         // -----------------------------
@@ -111,6 +113,9 @@ class BookAppointmentController extends Controller
             $selectedDate = session('selectedDate');
             $selectedSlot = session('selectedSlot');
 
+            // Get form field visibility settings (centralized method)
+            $formSettings = BookAppointmentService::getFormSettings();
+
             return view('public.booking', compact(
                 'step',
                 'doctor',
@@ -118,7 +123,8 @@ class BookAppointmentController extends Controller
                 'selectedSlot',
                 'specialties',
                 'doctors',
-                'specialty_id'
+                'specialty_id',
+                'formSettings'
             ));
         }
 
@@ -222,6 +228,13 @@ class BookAppointmentController extends Controller
                 'address' => 'nullable|string|min:10|max:500',
                 'reason_for_visit' => 'required|string|min:10|max:1000',
                 'allergies' => 'nullable|string|max:500',
+                'emergency_contact_name' => 'nullable|string|min:2|max:255',
+                'emergency_contact_phone' => 'nullable|regex:/^[0-9]{10,15}$/',
+                'blood_group' => 'nullable|string|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
+                'medical_history' => 'nullable|string|max:1000',
+                'current_medications' => 'nullable|string|max:1000',
+                'insurance_provider' => 'nullable|string|max:255',
+                'insurance_number' => 'nullable|string|max:255',
             ]);
 
             \Log::info('Step 3 validation passed', ['data' => $validated]);

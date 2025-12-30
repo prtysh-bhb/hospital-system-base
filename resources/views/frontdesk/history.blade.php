@@ -297,7 +297,7 @@
         function displayAppointments(appointments) {
             const tbody = document.getElementById('appointments-table-body');
 
-            if (appointments.length === 0) {
+            if (!appointments || appointments.length === 0) {
                 tbody.innerHTML = `
             <tr>
                 <td colspan="6" class="px-6 py-8 text-center text-gray-500">
@@ -308,60 +308,86 @@
                 return;
             }
 
-            tbody.innerHTML = appointments.map(appointment => {
+            tbody.innerHTML = appointments.map(item => {
+                const appointment = item.appointment ?? {};
+
+                const patient = appointment.patient ?? {};
+                const doctor = appointment.doctor ?? {};
+                const specialty =
+                    doctor.doctor_profile?.specialty?.name ?? 'N/A';
+
                 const statusColors = {
+                    pending: 'bg-gray-100 text-gray-700',
+                    confirmed: 'bg-blue-100 text-blue-700',
+                    checked_in: 'bg-teal-100 text-teal-700',
+                    in_progress: 'bg-yellow-100 text-yellow-700',
                     completed: 'bg-green-100 text-green-700',
                     cancelled: 'bg-red-100 text-red-700',
                     no_show: 'bg-orange-100 text-orange-700'
                 };
 
                 const statusLabels = {
+                    pending: 'Pending',
+                    confirmed: 'Confirmed',
+                    checked_in: 'Checked In',
+                    in_progress: 'In Progress',
                     completed: 'Completed',
                     cancelled: 'Cancelled',
                     no_show: 'No-Show'
                 };
 
-                // Safely get patient and doctor data
-                const patientFirstName = appointment.patient?.first_name || 'Unknown';
-                const patientLastName = appointment.patient?.last_name || 'Patient';
-                const patientEmail = appointment.patient?.email || 'N/A';
-                const doctorFirstName = appointment.doctor?.first_name || 'Unknown';
-                const doctorLastName = appointment.doctor?.last_name || 'Doctor';
-                const specialization = appointment.doctor?.doctor_profile?.specialization || 'N/A';
+                const patientName = patient.first_name ?
+                    `${patient.first_name} ${patient.last_name}` :
+                    'N/A';
+
+                const doctorName = doctor.first_name ?
+                    `Dr. ${doctor.first_name} ${doctor.last_name}` :
+                    'N/A';
 
                 return `
-            <tr class="hover:bg-gray-50">
-                <td class="px-3 sm:px-6 py-4 whitespace-nowrap">
-                    <p class="text-xs sm:text-sm font-medium text-gray-900">${appointment.appointment_number}</p>
-                </td>
-                <td class="px-3 sm:px-6 py-4 whitespace-nowrap">
-                    <p class="text-xs sm:text-sm text-gray-900">${formatDate(appointment.appointment_date)}</p>
-                    <p class="text-xs sm:text-sm text-gray-500">${formatTime(appointment.appointment_time)}</p>
-                </td>
-                <td class="px-3 sm:px-6 py-4 whitespace-nowrap">
-                    <div class="flex items-center gap-2">
-                        <div class="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 font-semibold text-sm">
-                            ${getInitials(patientFirstName, patientLastName)}
-                        </div>
-                        <div>
-                            <p class="text-xs sm:text-sm font-medium text-gray-900">${patientFirstName} ${patientLastName}</p>
-                            <p class="text-xs text-gray-500">${patientEmail}</p>
-                        </div>
-                    </div>
-                </td>
-                <td class="px-3 sm:px-6 py-4 whitespace-nowrap hidden md:table-cell">
-                    <p class="text-xs sm:text-sm text-gray-900">Dr. ${doctorFirstName} ${doctorLastName}</p>
-                    <p class="text-xs sm:text-sm text-gray-500">${specialization}</p>
-                </td>
-                <td class="px-3 sm:px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 sm:px-3 py-1 ${statusColors[appointment.status]} text-xs sm:text-sm font-medium rounded-full">
-                        ${statusLabels[appointment.status]}
-                    </span>
-                </td>
-                <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm">
-                    <button onclick="viewAppointment(${appointment.id})" class="text-sky-600 hover:text-sky-800">View</button>
-                </td>
-            </tr>
+        <tr class="hover:bg-gray-50">
+            <td class="px-3 sm:px-6 py-4 text-sm font-medium text-gray-900">
+                ${appointment.appointment_number ?? 'N/A'}
+            </td>
+
+            <td class="px-3 sm:px-6 py-4">
+                <p class="text-sm text-gray-900">
+                    ${formatDate(item.appointment_date)}
+                </p>
+                <p class="text-sm text-gray-500">
+                    ${formatTime(item.appointment_time)}
+                </p>
+            </td>
+
+            <td class="px-3 sm:px-6 py-4">
+                <p class="text-sm font-medium text-gray-900">
+                    ${patientName}
+                </p>
+                <p class="text-xs text-gray-500">
+                    ${patient.email ?? 'N/A'}
+                </p>
+            </td>
+
+            <td class="px-3 sm:px-6 py-4 hidden md:table-cell">
+                <p class="text-sm text-gray-900">${doctorName}</p>
+                <p class="text-xs text-gray-500">${specialty}</p>
+            </td>
+
+            <td class="px-3 sm:px-6 py-4">
+                <span class="px-3 py-1 text-xs font-medium rounded-full
+                    ${statusColors[item.status] ?? ''}">
+                    ${statusLabels[item.status] ?? 'N/A'}
+                </span>
+            </td>
+
+            <td class="px-3 sm:px-6 py-4">
+                <button
+                    onclick="viewAppointment(${item.id})"
+                    class="text-sky-600 hover:text-sky-800 text-sm">
+                    View
+                </button>
+            </td>
+        </tr>
         `;
             }).join('');
         }
@@ -429,113 +455,121 @@
         // Display appointment details in modal
         function displayAppointmentDetails(appointment) {
             const statusColors = {
+                pending: 'bg-gray-100 text-gray-700',
+                confirmed: 'bg-blue-100 text-blue-700',
+                checked_in: 'bg-teal-100 text-teal-700',
+                in_progress: 'bg-yellow-100 text-yellow-700',
                 completed: 'bg-green-100 text-green-700',
                 cancelled: 'bg-red-100 text-red-700',
                 no_show: 'bg-orange-100 text-orange-700'
             };
 
             const statusLabels = {
+                pending: 'Pending',
+                confirmed: 'Confirmed',
+                checked_in: 'Checked In',
+                in_progress: 'In Progress',
                 completed: 'Completed',
                 cancelled: 'Cancelled',
                 no_show: 'No-Show'
             };
 
             let html = `
-        <div class="space-y-4">
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="text-sm font-medium text-gray-500">Appointment Number</label>
-                    <p class="mt-1 text-base font-semibold text-gray-900">${appointment.appointment_number}</p>
-                </div>
-                <div>
-                    <label class="text-sm font-medium text-gray-500">Status</label>
-                    <p class="mt-1">
-                        <span class="px-3 py-1 ${statusColors[appointment.status]} text-sm font-medium rounded-full">
-                            ${statusLabels[appointment.status]}
-                        </span>
-                    </p>
-                </div>
-            </div>
-
-            <div class="border-t pt-4">
-                <h4 class="font-semibold text-gray-800 mb-3">Patient Information</h4>
+            <div class="space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="text-sm font-medium text-gray-500">Name</label>
-                        <p class="mt-1 text-base text-gray-900">${appointment.patient_name}</p>
+                        <label class="text-sm font-medium text-gray-500">Appointment Number</label>
+                        <p class="mt-1 text-base font-semibold text-gray-900">${appointment.appointment_number}</p>
                     </div>
                     <div>
-                        <label class="text-sm font-medium text-gray-500">Email</label>
-                        <p class="mt-1 text-base text-gray-900">${appointment.patient_email}</p>
-                    </div>
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Phone</label>
-                        <p class="mt-1 text-base text-gray-900">${appointment.patient_phone}</p>
+                        <label class="text-sm font-medium text-gray-500">Status</label>
+                        <p class="mt-1">
+                            <span class="px-3 py-1 ${statusColors[appointment.status]} text-sm font-medium rounded-full">
+                                ${statusLabels[appointment.status]}
+                            </span>
+                        </p>
                     </div>
                 </div>
-            </div>
 
-            <div class="border-t pt-4">
-                <h4 class="font-semibold text-gray-800 mb-3">Doctor Information</h4>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Name</label>
-                        <p class="mt-1 text-base text-gray-900">${appointment.doctor_name}</p>
-                    </div>
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Specialization</label>
-                        <p class="mt-1 text-base text-gray-900">${appointment.specialization}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="border-t pt-4">
-                <h4 class="font-semibold text-gray-800 mb-3">Appointment Details</h4>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Date</label>
-                        <p class="mt-1 text-base text-gray-900">${appointment.appointment_date}</p>
-                    </div>
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Time</label>
-                        <p class="mt-1 text-base text-gray-900">${appointment.appointment_time}</p>
-                    </div>
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Type</label>
-                        <p class="mt-1 text-base text-gray-900">${capitalizeFirst(appointment.appointment_type)}</p>
+                <div class="border-t pt-4">
+                    <h4 class="font-semibold text-gray-800 mb-3">Patient Information</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Name</label>
+                            <p class="mt-1 text-base text-gray-900">${appointment.patient_name}</p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Email</label>
+                            <p class="mt-1 text-base text-gray-900">${appointment.patient_email}</p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Phone</label>
+                            <p class="mt-1 text-base text-gray-900">${appointment.patient_phone}</p>
+                        </div>
                     </div>
                 </div>
+
+                <div class="border-t pt-4">
+                    <h4 class="font-semibold text-gray-800 mb-3">Doctor Information</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Name</label>
+                            <p class="mt-1 text-base text-gray-900">${appointment.doctor_name}</p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Specialization</label>
+                            <p class="mt-1 text-base text-gray-900">${appointment.specialization}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-t pt-4">
+                    <h4 class="font-semibold text-gray-800 mb-3">Appointment Details</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Date</label>
+                            <p class="mt-1 text-base text-gray-900">${appointment.appointment_date}</p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Time</label>
+                            <p class="mt-1 text-base text-gray-900">${appointment.appointment_time}</p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Type</label>
+                            <p class="mt-1 text-base text-gray-900">${capitalizeFirst(appointment.appointment_type)}</p>
+                        </div>
+                    </div>
+                </div>
+
+                ${appointment.reason_for_visit ? `
+                            <div class="border-t pt-4">
+                                <label class="text-sm font-medium text-gray-500">Reason for Visit</label>
+                                <p class="mt-1 text-base text-gray-900">${appointment.reason_for_visit}</p>
+                            </div>
+                        ` : ''}
+
+                ${appointment.symptoms ? `
+                            <div class="border-t pt-4">
+                                <label class="text-sm font-medium text-gray-500">Symptoms</label>
+                                <p class="mt-1 text-base text-gray-900">${appointment.symptoms}</p>
+                            </div>
+                        ` : ''}
+
+                ${appointment.notes ? `
+                            <div class="border-t pt-4">
+                                <label class="text-sm font-medium text-gray-500">Notes</label>
+                                <p class="mt-1 text-base text-gray-900">${appointment.notes}</p>
+                            </div>
+                        ` : ''}
+
+                ${appointment.cancellation_reason ? `
+                            <div class="border-t pt-4">
+                                <label class="text-sm font-medium text-gray-500">Cancellation Reason</label>
+                                <p class="mt-1 text-base text-red-600">${appointment.cancellation_reason}</p>
+                            </div>
+                        ` : ''}
             </div>
-
-            ${appointment.reason_for_visit ? `
-                                <div class="border-t pt-4">
-                                    <label class="text-sm font-medium text-gray-500">Reason for Visit</label>
-                                    <p class="mt-1 text-base text-gray-900">${appointment.reason_for_visit}</p>
-                                </div>
-                            ` : ''}
-
-            ${appointment.symptoms ? `
-                                <div class="border-t pt-4">
-                                    <label class="text-sm font-medium text-gray-500">Symptoms</label>
-                                    <p class="mt-1 text-base text-gray-900">${appointment.symptoms}</p>
-                                </div>
-                            ` : ''}
-
-            ${appointment.notes ? `
-                                <div class="border-t pt-4">
-                                    <label class="text-sm font-medium text-gray-500">Notes</label>
-                                    <p class="mt-1 text-base text-gray-900">${appointment.notes}</p>
-                                </div>
-                            ` : ''}
-
-            ${appointment.cancellation_reason ? `
-                                <div class="border-t pt-4">
-                                    <label class="text-sm font-medium text-gray-500">Cancellation Reason</label>
-                                    <p class="mt-1 text-base text-red-600">${appointment.cancellation_reason}</p>
-                                </div>
-                            ` : ''}
-        </div>
-    `;
+            `;
 
             document.getElementById('appointment-details').innerHTML = html;
         }

@@ -224,6 +224,50 @@
                     </div>
                 </div>
 
+                <!-- Medical Information -->
+                <div class="pt-4 border-t border-gray-200">
+                    <h5 class="text-base font-semibold text-gray-800 mb-4">Medical Information</h5>
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Medical History</label>
+                            <textarea id="edit_medical_history" data-error="edit_medical_history_error"
+                                placeholder="Any past medical conditions, surgeries, allergies, etc."
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500" rows="3"></textarea>
+                            <span class="text-xs text-red-500 hidden" id="edit_medical_history_error"></span>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Current Medications</label>
+                            <textarea id="edit_current_medications" data-error="edit_current_medications_error"
+                                placeholder="List any medications currently taking"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500" rows="3"></textarea>
+                            <span class="text-xs text-red-500 hidden" id="edit_current_medications_error"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Insurance Information -->
+                <div class="pt-4 border-t border-gray-200">
+                    <h5 class="text-base font-semibold text-gray-800 mb-4">Insurance Information</h5>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Insurance Provider</label>
+                            <input type="text" id="edit_insurance_provider" data-error="edit_insurance_provider_error"
+                                placeholder="Insurance company name"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500">
+                            <span class="text-xs text-red-500 hidden" id="edit_insurance_provider_error"></span>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Insurance Number</label>
+                            <input type="text" id="edit_insurance_number" data-error="edit_insurance_number_error"
+                                placeholder="Policy/Member number"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500">
+                            <span class="text-xs text-red-500 hidden" id="edit_insurance_number_error"></span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="flex justify-end gap-3 mt-6">
                     <button type="button" onclick="closeEditModal()"
                         class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
@@ -309,6 +353,14 @@
         document.getElementById('cancelDeleteBtn').addEventListener('click', () => {
             patientToDeleteId = null;
             document.getElementById('deletePatientModal').classList.add('hidden');
+        });
+
+        // Close delete modal when clicking outside
+        document.getElementById('deletePatientModal').addEventListener('click', (e) => {
+            if (e.target.id === 'deletePatientModal') {
+                patientToDeleteId = null;
+                document.getElementById('deletePatientModal').classList.add('hidden');
+            }
         });
 
         document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
@@ -406,7 +458,7 @@
                     </td>
                     <td class="px-3 sm:px-6 py-4 whitespace-nowrap hidden lg:table-cell">
                         ${lastVisit ? `<p class="text-xs sm:text-sm text-gray-900">${formatDate(lastVisit.appointment_date)}</p>
-                                    <p class="text-xs sm:text-sm text-gray-500">${lastVisit.doctor?.first_name ?? ''} ${lastVisit.doctor?.last_name ?? ''}</p>`
+                                            <p class="text-xs sm:text-sm text-gray-500">${lastVisit.doctor?.first_name ?? ''} ${lastVisit.doctor?.last_name ?? ''}</p>`
                              : '<p class="text-xs sm:text-sm text-gray-500">No visits yet</p>'}
                     </td>
                     <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm">
@@ -523,13 +575,75 @@
                         <p class="text-sm font-medium text-gray-500">Address</p>
                         <p class="text-sm text-gray-900">${patient.address || 'Not provided'}</p>
                     </div>
+                    ${patient.blood_group ? `
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Blood Group</p>
+                                    <p class="text-sm text-gray-900">
+                                        <span class="px-3 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-full">
+                                            ${patient.blood_group}
+                                        </span>
+                                    </p>
+                                </div>
+                            ` : ''}
+                    ${patient.emergency_contact_name || patient.emergency_contact_phone ? `
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Emergency Contact</p>
+                                    <p class="text-sm text-gray-900">${patient.emergency_contact_name || 'N/A'}</p>
+                                    ${patient.emergency_contact_phone ? `<p class="text-xs text-gray-600">${patient.emergency_contact_phone}</p>` : ''}
+                                </div>
+                            ` : ''}
+                </div>
+
+                ${patient.medical_history || patient.current_medications ? `
+                            <div class="border-t pt-4">
+                                <h5 class="text-base font-semibold text-gray-800 mb-3">Medical Information</h5>
+                                ${patient.medical_history ? `
+                            <div class="mb-3">
+                                <p class="text-sm font-medium text-gray-500">Medical History</p>
+                                <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mt-1">
+                                    <p class="text-sm text-gray-700">${patient.medical_history}</p>
+                                </div>
+                            </div>
+                        ` : ''}
+                                ${patient.current_medications ? `
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Current Medications</p>
+                                <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mt-1">
+                                    <p class="text-sm text-gray-700">${patient.current_medications}</p>
+                                </div>
+                            </div>
+                        ` : ''}
+                            </div>
+                        ` : ''}
+
+                ${patient.insurance_provider || patient.insurance_number ? `
+                            <div class="border-t pt-4">
+                                <h5 class="text-base font-semibold text-gray-800 mb-3">Insurance Information</h5>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    ${patient.insurance_provider ? `
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Provider</p>
+                                    <p class="text-sm text-gray-900">${patient.insurance_provider}</p>
+                                </div>
+                            ` : ''}
+                                    ${patient.insurance_number ? `
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Policy Number</p>
+                                    <p class="text-sm text-gray-900">${patient.insurance_number}</p>
+                                </div>
+                            ` : ''}
+                                </div>
+                            </div>
+                        ` : ''}
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     ${patient.last_appointment ? `
-                                                                                                                                                                                                                            <div class="md:col-span-2 pt-4 border-t">
-                                                                                                                                                                                                                                <p class="text-sm font-medium text-gray-500 mb-2">Last Appointment</p>
-                                                                                                                                                                                                                                <p class="text-sm text-gray-900">Date: ${formatDate(patient.last_appointment.date)}</p>
-                                                                                                                                                                                                                                <p class="text-sm text-gray-900">Doctor: ${patient.last_appointment.doctor}</p>
-                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                        ` : ''}
+                                                                                                                                                                                                                                    <div class="md:col-span-2 pt-4 border-t">
+                                                                                                                                                                                                                                        <p class="text-sm font-medium text-gray-500 mb-2">Last Appointment</p>
+                                                                                                                                                                                                                                        <p class="text-sm text-gray-900">Date: ${formatDate(patient.last_appointment.date)}</p>
+                                                                                                                                                                                                                                        <p class="text-sm text-gray-900">Doctor: ${patient.last_appointment.doctor}</p>
+                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                ` : ''}
                 </div>
 
                 <div class="flex justify-end gap-3 pt-4 border-t">
@@ -580,6 +694,13 @@
             document.getElementById('edit_date_of_birth').value = patient.date_of_birth.split('T')[0];
             document.getElementById('edit_gender').value = patient.gender;
             document.getElementById('edit_address').value = patient.address || '';
+            document.getElementById('edit_blood_group').value = patient.blood_group || '';
+            document.getElementById('edit_emergency_contact_name').value = patient.emergency_contact_name || '';
+            document.getElementById('edit_emergency_contact_phone').value = patient.emergency_contact_phone || '';
+            document.getElementById('edit_medical_history').value = patient.medical_history || '';
+            document.getElementById('edit_current_medications').value = patient.current_medications || '';
+            document.getElementById('edit_insurance_provider').value = patient.insurance_provider || '';
+            document.getElementById('edit_insurance_number').value = patient.insurance_number || '';
 
             document.getElementById('editModal').classList.remove('hidden');
         }
@@ -620,6 +741,10 @@
                 blood_group: document.getElementById('edit_blood_group').value,
                 emergency_contact_name: document.getElementById('edit_emergency_contact_name').value,
                 emergency_contact_phone: document.getElementById('edit_emergency_contact_phone').value,
+                medical_history: document.getElementById('edit_medical_history').value,
+                current_medications: document.getElementById('edit_current_medications').value,
+                insurance_provider: document.getElementById('edit_insurance_provider').value,
+                insurance_number: document.getElementById('edit_insurance_number').value,
             };
 
             const saveBtn = document.getElementById('savePatientBtn');

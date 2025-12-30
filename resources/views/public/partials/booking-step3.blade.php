@@ -188,6 +188,112 @@
                         @enderror
                     </div>
 
+                    <!-- Emergency Contact (Conditional) -->
+                    @hasAccess('show_emergency_contact')
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Emergency Contact
+                                    Name</label>
+                                <input type="text" name="emergency_contact_name"
+                                    value="{{ old('emergency_contact_name') }}" oninput="removeError(this)"
+                                    class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-sky-600 focus:border-transparent @error('emergency_contact_name') border-red-500 @else border-gray-300 @enderror"
+                                    placeholder="Contact person name">
+                                @error('emergency_contact_name')
+                                    <p class="text-xs text-red-500 mt-1 error-msg">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Emergency Contact
+                                    Phone</label>
+                                <input type="text" name="emergency_contact_phone"
+                                    value="{{ old('emergency_contact_phone') }}" oninput="removeError(this)"
+                                    class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-sky-600 focus:border-transparent @error('emergency_contact_phone') border-red-500 @else border-gray-300 @enderror"
+                                    placeholder="Contact phone number">
+                                @error('emergency_contact_phone')
+                                    <p class="text-xs text-red-500 mt-1 error-msg">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+                    @endhasAccess
+
+                    <!-- Blood Group (Conditional) -->
+                    @hasAccess('show_blood_group')
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Blood Group</label>
+                            <select name="blood_group" oninput="removeError(this)"
+                                class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-sky-600 focus:border-transparent @error('blood_group') border-red-500 @else border-gray-300 @enderror">
+                                <option value="">Select blood group</option>
+                                <option value="A+" {{ old('blood_group') == 'A+' ? 'selected' : '' }}>A+</option>
+                                <option value="A-" {{ old('blood_group') == 'A-' ? 'selected' : '' }}>A-</option>
+                                <option value="B+" {{ old('blood_group') == 'B+' ? 'selected' : '' }}>B+</option>
+                                <option value="B-" {{ old('blood_group') == 'B-' ? 'selected' : '' }}>B-</option>
+                                <option value="AB+" {{ old('blood_group') == 'AB+' ? 'selected' : '' }}>AB+
+                                </option>
+                                <option value="AB-" {{ old('blood_group') == 'AB-' ? 'selected' : '' }}>AB-
+                                </option>
+                                <option value="O+" {{ old('blood_group') == 'O+' ? 'selected' : '' }}>O+</option>
+                                <option value="O-" {{ old('blood_group') == 'O-' ? 'selected' : '' }}>O-</option>
+                            </select>
+                            @error('blood_group')
+                                <p class="text-xs text-red-500 mt-1 error-msg">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    @endhasAccess
+
+                    <!-- Medical History (Conditional) -->
+                    @hasAccess('show_medical_history')
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Medical History</label>
+                            <textarea name="medical_history" rows="3" oninput="removeError(this)"
+                                class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-sky-600 focus:border-transparent @error('medical_history') border-red-500 @else border-gray-300 @enderror"
+                                placeholder="Any past medical conditions, surgeries, etc.">{{ old('medical_history') }}</textarea>
+                            @error('medical_history')
+                                <p class="text-xs text-red-500 mt-1 error-msg">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    @endhasAccess
+
+                    <!-- Current Medications (Conditional) -->
+                    @hasAccess('show_current_medications')
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Current Medications</label>
+                            <textarea name="current_medications" rows="3" oninput="removeError(this)"
+                                class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-sky-600 focus:border-transparent @error('current_medications') border-red-500 @else border-gray-300 @enderror"
+                                placeholder="List any medications you are currently taking">{{ old('current_medications') }}</textarea>
+                            @error('current_medications')
+                                <p class="text-xs text-red-500 mt-1 error-msg">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    @endhasAccess
+
+                    <!-- Insurance Details (Conditional) -->
+                    @hasAccess('show_insurance_details')
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Insurance Provider</label>
+                                <input type="text" name="insurance_provider" value="{{ old('insurance_provider') }}"
+                                    oninput="removeError(this)"
+                                    class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-sky-600 focus:border-transparent @error('insurance_provider') border-red-500 @else border-gray-300 @enderror"
+                                    placeholder="Insurance company name">
+                                @error('insurance_provider')
+                                    <p class="text-xs text-red-500 mt-1 error-msg">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Insurance Number</label>
+                                <input type="text" name="insurance_number" value="{{ old('insurance_number') }}"
+                                    oninput="removeError(this)"
+                                    class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-sky-600 focus:border-transparent @error('insurance_number') border-red-500 @else border-gray-300 @enderror"
+                                    placeholder="Policy/Member number">
+                                @error('insurance_number')
+                                    <p class="text-xs text-red-500 mt-1 error-msg">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+                    @endhasAccess
+
                 </div>
             </div>
 

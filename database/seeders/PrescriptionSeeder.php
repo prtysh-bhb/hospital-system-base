@@ -1,47 +1,73 @@
 <?php
 
-// database/seeders/PrescriptionSeeder.php
-
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
+use App\Models\Prescription;
+use App\Models\Appointment;
+use Carbon\Carbon;
 
 class PrescriptionSeeder extends Seeder
 {
-    private $prescriptionCounter = 1;
+    private int $prescriptionCounter = 1;
 
-    public function run()
+    public function run(): void
     {
-        // Get completed appointments
-        $appointments = DB::table('appointments')
-            ->where('status', 'completed')
-            ->get();
+        // Get completed appointments using MODEL
+        $appointments = Appointment::where('status', 'completed')->get();
 
-        $prescriptions = [];
+        if ($appointments->isEmpty()) {
+            $this->command->warn('No completed appointments found. PrescriptionSeeder skipped.');
+            return;
+        }
+
+        // Check the last generated prescription number in the database
+        $lastPrescription = Prescription::orderBy('id', 'desc')->first();
+        if ($lastPrescription) {
+            // Extract the last prescription number and increment the counter
+            $lastPrescribedNumber = $lastPrescription->prescription_number;
+            $year = date('Y');
+            $counter = (int) substr($lastPrescribedNumber, 8); // Extract the counter part (e.g., 0001 from RX-2025-0001)
+            $this->prescriptionCounter = $counter + 1;
+        }
 
         foreach ($appointments as $appointment) {
-            if (rand(0, 1)) { // 50% chance of prescription
-                $prescriptions[] = [
-                    'prescription_number' => 'RX-'.date('Y').'-'.str_pad($this->prescriptionCounter++, 4, '0', STR_PAD_LEFT),
-                    'appointment_id' => $appointment->id,
+
+            // 50% chance to create/update prescription
+            if (!rand(0, 1)) {
+                continue;
+            }
+
+            // Generate a unique prescription number
+            do {
+                $prescriptionNumber = 'RX-' . date('Y') . '-' . str_pad(
+                    $this->prescriptionCounter++,
+                    4,
+                    '0',
+                    STR_PAD_LEFT
+                );
+            } while (Prescription::where('prescription_number', $prescriptionNumber)->exists()); // Ensure it's unique
+
+            // Create or update prescription record
+            Prescription::updateOrCreate(
+                ['appointment_id' => $appointment->id], // Unique key
+                [
+                    'prescription_number' => $prescriptionNumber,
                     'patient_id' => $appointment->patient_id,
                     'doctor_id' => $appointment->doctor_id,
                     'diagnosis' => $this->getRandomDiagnosis(),
-                    'medications' => json_encode($this->generateMedications()),
+                    'medications' => $this->generateMedications(), // JSON cast recommended
                     'instructions' => $this->getRandomInstructions(),
-                    'follow_up_date' => now()->addDays(rand(7, 30))->format('Y-m-d'),
+                    'follow_up_date' => Carbon::now()->addDays(rand(7, 30))->format('Y-m-d'),
                     'notes' => 'Take medications as prescribed and follow up if symptoms persist.',
                     'created_at' => $appointment->created_at,
                     'updated_at' => now(),
-                ];
-            }
+                ]
+            );
         }
-
-        DB::table('prescriptions')->insert($prescriptions);
     }
 
-    private function getRandomDiagnosis()
+    private function getRandomDiagnosis(): string
     {
         $diagnoses = [
             'Upper respiratory infection',
@@ -56,7 +82,7 @@ class PrescriptionSeeder extends Seeder
         return $diagnoses[array_rand($diagnoses)];
     }
 
-    private function generateMedications()
+    private function generateMedications(): array
     {
         $medications = [];
         $numMeds = rand(1, 3);
@@ -74,14 +100,14 @@ class PrescriptionSeeder extends Seeder
 
         for ($i = 0; $i < $numMeds; $i++) {
             $med = $commonMeds[$i];
-            $med['instructions'] = 'Take with food'.(rand(0, 1) ? ', avoid alcohol' : '');
+            $med['instructions'] = 'Take with food' . (rand(0, 1) ? ', avoid alcohol' : '');
             $medications[] = $med;
         }
 
         return $medications;
     }
 
-    private function getRandomInstructions()
+    private function getRandomInstructions(): string
     {
         $instructions = [
             'Complete the full course of antibiotics',

@@ -119,18 +119,17 @@
 
     @push('scripts')
         <script>
+            let deleteId = null; // make these global within this script
+            let deleteName = null;
+
             document.addEventListener("DOMContentLoaded", function() {
                 loadAppointments(1); // load default page
-
-                let deleteId = null;
-                let deleteName = null;
 
                 // When delete button is clicked → OPEN MODAL
                 $(document).on('click', '.delete-appointment-btn', function() {
                     deleteId = $(this).data('id');
                     deleteName = $(this).data('appointment-no');
 
-                    // Update the modal text with the appointment name
                     document.getElementById('deleteModalText').textContent =
                         `Are you sure you want to delete the appointment "${deleteName}"?`;
 
@@ -139,6 +138,51 @@
 
                 // Cancel button → CLOSE MODAL
                 document.getElementById('cancelDeleteBtn').addEventListener('click', function() {
+                    document.getElementById('customDeleteModal').classList.add('hidden');
+                    deleteId = null;
+                    deleteName = null;
+                });
+
+                // Confirm delete → DELETE appointment
+                document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+                    if (!deleteId) return;
+
+                    $.ajax({
+                        url: "{{ route('admin.delete-appointment') }}",
+                        type: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        data: {
+                            appointment_id: deleteId
+                        },
+                        success: function(response) {
+                            if (response.status == 200) {
+                                toastr.success(response.msg);
+                                setTimeout(function() {
+                                    loadAppointments(1);
+                                }, 500);
+                            } else {
+                                toastr.error(response.msg);
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            try {
+                                if (xhr.status === 422) {
+                                    let errors = xhr.responseJSON.errors;
+                                    Object.keys(errors).forEach(function(key) {
+                                        toastr.error(errors[key][0]);
+                                    });
+                                } else {
+                                    toastr.error("An error occurred: " + error);
+                                }
+                            } catch (e) {
+                                toastr.error("A server error occurred.");
+                                console.error(e);
+                            }
+                        }
+                    });
+
                     document.getElementById('customDeleteModal').classList.add('hidden');
                     deleteId = null;
                     deleteName = null;
@@ -381,87 +425,6 @@
                 });
             });
 
-            // Handling the click event for the Delete button
-            document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
-                if (!deleteId) return;
-                $.ajax({
-                    url: "{{ route('admin.delete-appointment') }}",
-                    type: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    data: {
-                        appointment_id: appointmentId
-                    },
-                    success: function(response) {
-                        if (response.status == 200) {
-                            toastr.success(response.msg);
-                            setTimeout(function() {
-                                loadAppointments(1);
-                            }, 500);
-                        } else {
-                            toastr.error(response.msg);
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        try {
-                            if (xhr.status === 422) {
-                                let errors = xhr.responseJSON.errors;
-                                Object.keys(errors).forEach(function(key) {
-                                    toastr.error(errors[key][0]);
-                                });
-                            } else {
-                                toastr.error("An error occurred: " + error);
-                            }
-                        } catch (e) {
-                            toastr.error("A server error occurred.");
-                            console.error(e);
-                        }
-                    }
-                });
-            });
-
-            // $('body').on('click', '.delete-appointment-btn', function() {
-            //     var appointmentId = $(this).data('id');
-
-            //     if (confirm('Are you sure you want to delete this appointment? This action cannot be undone.')) {
-            //         $.ajax({
-            //             url: "{{ route('admin.delete-appointment') }}",
-            //             type: 'DELETE',
-            //             headers: {
-            //                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            //             },
-            //             data: {
-            //                 appointment_id: appointmentId
-            //             },
-            //             success: function(response) {
-            //                 if (response.status == 200) {
-            //                     toastr.success(response.msg);
-            //                     setTimeout(function() {
-            //                         loadAppointments(1);
-            //                     }, 500);
-            //                 } else {
-            //                     toastr.error(response.msg);
-            //                 }
-            //             },
-            //             error: function(xhr, status, error) {
-            //                 try {
-            //                     if (xhr.status === 422) {
-            //                         let errors = xhr.responseJSON.errors;
-            //                         Object.keys(errors).forEach(function(key) {
-            //                             toastr.error(errors[key][0]);
-            //                         });
-            //                     } else {
-            //                         toastr.error("An error occurred: " + error);
-            //                     }
-            //                 } catch (e) {
-            //                     toastr.error("A server error occurred.");
-            //                     console.error(e);
-            //                 }
-            //             }
-            //         });
-            //     }
-            // });
 
             function loadViewAppointmentTemplate(appointment) {
                 var html = `
@@ -538,14 +501,23 @@
                             </div>
                         </div>
 
+                        ${appointment.status === 'cancelled' && appointment.cancellation_reason ? `
+                                    <div class="border-t pt-4">
+                                        <label class="block text-xs sm:text-sm font-medium text-gray-600 mb-2">Cancellation Reason</label>
+                                        <div class="bg-red-50 p-3 rounded-lg border border-red-200">
+                                            <p class="text-sm text-red-700">${appointment.cancellation_reason}</p>
+                                        </div>
+                                    </div>
+                                ` : ''}
+
                         ${appointment.notes ? `
-                                                                                                                                                                                                                <div class="border-t pt-4">
-                                                                                                                                                                                                                    <label class="block text-xs sm:text-sm font-medium text-gray-600 mb-2">Additional Notes</label>
-                                                                                                                                                                                                                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                                                                                                                                                                                                        <p class="text-sm text-gray-700">${appointment.notes}</p>
-                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                ` : ''}
+                                    <div class="border-t pt-4">
+                                        <label class="block text-xs sm:text-sm font-medium text-gray-600 mb-2">Additional Notes</label>
+                                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                            <p class="text-sm text-gray-700">${appointment.notes}</p>
+                                        </div>
+                                    </div>
+                                ` : ''}
 
                         <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
                             <button type="button" onclick="closeEditModal()"
@@ -624,7 +596,8 @@
                     appointment_type: $('#edit_type_select').val(),
                     reason_for_visit: $('#edit_reason_for_visit').val(),
                     notes: $('#edit_notes').val(),
-                    status: $('#edit_status').val()
+                    status: $('#edit_status').val(),
+                    cancellation_reason: $('#edit_cancellation_reason').val()
                 };
 
                 const submitBtn = $('#editAppointmentForm').find('button[type="submit"]');

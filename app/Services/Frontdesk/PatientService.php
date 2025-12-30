@@ -65,6 +65,10 @@ class PatientService
                     'blood_group' => $data['blood_group'] ?? null,
                     'emergency_contact_name' => $data['emergency_contact_name'] ?? null,
                     'emergency_contact_phone' => $data['emergency_contact_phone'] ?? null,
+                    'medical_history' => $data['medical_history'] ?? null,
+                    'current_medications' => $data['current_medications'] ?? null,
+                    'insurance_provider' => $data['insurance_provider'] ?? null,
+                    'insurance_number' => $data['insurance_number'] ?? null,
                 ]);
             }
 
@@ -85,6 +89,7 @@ class PatientService
         if (! $user || $user->role !== 'patient') {
             return false;
         }
+        $user->patientProfile()->delete();
 
         return $user->delete();
     }

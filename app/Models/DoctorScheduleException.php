@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class DoctorScheduleException extends Model
 {
     use HasFactory;
-
+    protected $table = 'doctor_schedule_exceptions';
     protected $fillable = [
         'doctor_id',
         'exception_date',

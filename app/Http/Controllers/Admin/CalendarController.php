@@ -46,7 +46,7 @@ class CalendarController extends Controller
         $date = $request->input('date');
         $doctorId = $request->input('doctor_id', null);
 
-        if (!$date) {
+        if (! $date) {
             return response()->json([
                 'success' => false,
                 'message' => 'Date is required',
@@ -84,10 +84,10 @@ class CalendarController extends Controller
                     'reason_for_visit' => $appointment->reason_for_visit,
                     'symptoms' => $appointment->symptoms,
                     'notes' => $appointment->notes,
-                    'patient_name' => $appointment->patient->first_name . ' ' . $appointment->patient->last_name,
+                    'patient_name' => $appointment->patient->first_name.' '.$appointment->patient->last_name,
                     'patient_phone' => $appointment->patient->phone,
                     'patient_email' => $appointment->patient->email,
-                    'doctor_name' => 'Dr. ' . $appointment->doctor->first_name . ' ' . $appointment->doctor->last_name,
+                    'doctor_name' => 'Dr. '.$appointment->doctor->first_name.' '.$appointment->doctor->last_name,
                     'doctor_specialty' => $appointment->doctor->doctorProfile?->specialty?->name,
                 ],
             ]);

@@ -1,7 +1,8 @@
 @extends('layouts.public')
 
 @section('title', 'Welcome')
-@section('body-class', 'bg-gradient-to-br from-sky-50 via-white to-sky-50 min-h-screen flex items-center justify-center
+@section('body-class',
+    'bg-gradient-to-br from-sky-50 via-white to-sky-50 min-h-screen flex items-center justify-center
     p-4 sm:p-6 lg:p-8')
 
 @section('content')
@@ -138,6 +139,13 @@
         <!-- Staff Login -->
         <div class="text-center">
             <p class="text-sm sm:text-base text-gray-600 mb-2 sm:mb-3">Staff Members</p>
+            <a class="inline-flex items-center px-5 py-2.5 sm:px-6 sm:py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors text-sm sm:text-base"
+                href="{{ route('patient.login') }}">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Patient Login</a>
             <a href="{{ route('login') }}"
                 class="inline-flex items-center px-5 py-2.5 sm:px-6 sm:py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors text-sm sm:text-base">
                 <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

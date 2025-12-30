@@ -108,8 +108,8 @@
                         </div>
                     </div>
 
-                    <!-- Status Badge -->
-                    <div class="flex-shrink-0 ml-2">
+                    <!-- Status Badges -->
+                    <div class="flex-shrink-0 ml-2 flex flex-col gap-1.5">
                         @if ($doctor->user->status === 'active')
                             <span
                                 class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-200">
@@ -124,6 +124,17 @@
                             <span
                                 class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
                                 {{ ucfirst($doctor->user->status) }}
+                            </span>
+                        @endif
+
+                        @if ($doctor->user->isOnLeave())
+                            <span
+                                class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800 border border-orange-200">
+                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path
+                                        d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                                </svg>
+                                On Leave
                             </span>
                         @endif
                     </div>
@@ -173,7 +184,11 @@
 
                 <!-- Action Buttons -->
                 <div class="flex gap-2">
-                    <button data-doctor-id="{{ $doctor->user->id }}"
+                    <button data-doctor-id="{{ $doctor->user->id }}" data-color-gradient="{{ $color['gradient'] }}"
+                        data-color-avatar="{{ $color['avatar'] }}" data-color-text="{{ $color['text'] }}"
+                        data-color-accent="{{ $color['accent'] }}"
+                        data-color-accent-light="{{ $color['accent-light'] }}"
+                        data-color-border="{{ $color['border'] }}" data-color-hover="{{ $color['hover'] }}"
                         class="view-doctor-btn flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 {{ $color['ring'] }}">
                         View Details
                     </button>

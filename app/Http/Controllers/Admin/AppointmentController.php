@@ -2,16 +2,19 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\User;
-use App\Models\Appointment;
-use Illuminate\Support\Str;
-use Illuminate\Http\Request;
-use App\Models\PatientProfile;
-use Illuminate\Validation\Rule;
-use Symfony\Component\Clock\now;
+use App\Enums\WhatsappTemplating;
+use App\Events\NotifiyUserEvent;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Hash;
+use App\Models\Appointment;
+use App\Models\PatientProfile;
+use App\Models\User;
 use App\Services\AppointmentSlotService;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use App\Services\Public\BookAppointmentService;
 
 class AppointmentController extends Controller
 {
@@ -35,7 +38,10 @@ class AppointmentController extends Controller
         $patients = User::where('role', 'patient')->get();
         $doctors = User::where('role', 'doctor')->with('doctorProfile.specialty')->get();
 
-        return view('admin.add-appointment', compact('patients', 'doctors'));
+        // Get form field visibility settings (centralized method)
+        $formSettings = BookAppointmentService::getFormSettings();
+
+        return view('admin.add-appointment', compact('patients', 'doctors', 'formSettings'));
     }
 
     // Get available time slots for a doctor on a specific date
@@ -52,7 +58,11 @@ class AppointmentController extends Controller
 
     public function getAppointments(Request $request)
     {
-        $query = Appointment::with(['patient', 'doctor.doctorProfile.specialty']);
+        // $query = Appointment::with(['patient', 'doctor.doctorProfile.specialty']);
+        $query = Appointment::with(['patient' => function ($query) {
+                $query->withTrashed();  
+            },'doctor.doctorProfile.specialty'
+        ])->whereNull('appointments.deleted_at');
 
         // 1. SEARCH
         if ($request->filled('search')) {
@@ -156,6 +166,14 @@ class AppointmentController extends Controller
                     'appointment_type' => 'required|in:consultation,follow_up,emergency,check_up',
                     'reason_for_visit' => 'required|string|max:1000',
                     'notes' => 'nullable|string|max:500',
+                    // Optional patient profile fields
+                    'emergency_contact_name' => 'nullable|string|min:2|max:255',
+                    'emergency_contact_phone' => 'nullable|regex:/^[0-9]{10,15}$/',
+                    'blood_group' => 'nullable|string|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
+                    'medical_history' => 'nullable|string|max:1000',
+                    'current_medications' => 'nullable|string|max:1000',
+                    'insurance_provider' => 'nullable|string|max:255',
+                    'insurance_number' => 'nullable|string|max:255',
                 ], [
                     'first_name.required' => 'First name is required.',
                     'first_name.regex' => 'First name should only contain letters and spaces.',
@@ -201,12 +219,16 @@ class AppointmentController extends Controller
                     'password' => Hash::make(Str::random(12)),
                 ]);
 
-                // Create patient profile (address is stored in users table, not here)
+                // Create patient profile with all optional fields
                 PatientProfile::create([
                     'user_id' => $user->id,
                     'emergency_contact_name' => $request->input('emergency_contact_name'),
                     'emergency_contact_phone' => $request->input('emergency_contact_phone'),
+                    'blood_group' => $request->input('blood_group'),
                     'medical_history' => $request->input('medical_history'),
+                    'current_medications' => $request->input('current_medications'),
+                    'insurance_provider' => $request->input('insurance_provider'),
+                    'insurance_number' => $request->input('insurance_number'),
                 ]);
 
                 $patientId = $user->id;
@@ -214,12 +236,11 @@ class AppointmentController extends Controller
 
             // Generate appointment number
             // $appointmentNumber = 'APT-'.date('Y').'-'.str_pad(Appointment::count() + 1, 6, '0', STR_PAD_LEFT);
-            
+
             $date = now()->format('Ymd');
             $random = random_int(0, 999999);
             $randomPadded = str_pad($random, 6, '0', STR_PAD_LEFT);
-            $appointmentNumber = 'APT-' . $date . '-' . $randomPadded;
-            
+            $appointmentNumber = 'APT-'.$date.'-'.$randomPadded;
 
             // Parse appointment time (could be "09:00 AM" format or "09:00" format)
             $appointmentTime = $request->input('appointment_time');
@@ -301,10 +322,13 @@ class AppointmentController extends Controller
 
         $appointment = null;
         if ($request->has('appointment_id')) {
-            $appointment = Appointment::with(['patient', 'doctor.doctorProfile.specialty'])->find($request->appointment_id);
+            $appointment = Appointment::with(['patient', 'doctor.doctorProfile.specialty', 'patient.patientProfile'])->find($request->appointment_id);
         }
 
-        return view('admin.edit-appointment-modal', compact('patients', 'doctors', 'appointment'));
+        // Get form field visibility settings (centralized method)
+        $formSettings = BookAppointmentService::getFormSettings();
+
+        return view('admin.edit-appointment-modal', compact('patients', 'doctors', 'appointment', 'formSettings'));
     }
 
     // Update appointment
@@ -350,6 +374,19 @@ class AppointmentController extends Controller
                     'required',
                     'in:pending,confirmed,checked_in,in_progress,completed,cancelled,no_show',
                 ],
+                'cancellation_reason' => [
+                    'required_if:status,cancelled',
+                    'nullable',
+                    'string',
+                    'max:500',
+                ],
+                'emergency_contact_name' => 'nullable|string|max:255',
+                'emergency_contact_phone' => 'nullable|string|max:20',
+                'blood_group' => 'nullable|string|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
+                'medical_history' => 'nullable|string|max:2000',
+                'current_medications' => 'nullable|string|max:2000',
+                'insurance_provider' => 'nullable|string|max:255',
+                'insurance_number' => 'nullable|string|max:100',
             ], [
                 'patient_id.required' => 'Please select a valid patient.',
                 'patient_id.exists' => 'The selected patient does not exist or is not valid.',
@@ -365,6 +402,8 @@ class AppointmentController extends Controller
                 'reason_for_visit.max' => 'Reason for visit cannot be longer than 1000 characters.',
                 'status.required' => 'Status is required.',
                 'status.in' => 'Please select a valid status.',
+                'cancellation_reason.required_if' => 'Please provide a reason for cancellation.',
+                'cancellation_reason.max' => 'Cancellation reason cannot be longer than 500 characters.',
             ]);
 
             // Find and update the appointment
@@ -374,6 +413,12 @@ class AppointmentController extends Controller
                 return response()->json([
                     'status' => 404,
                     'msg' => 'Appointment not found.',
+                ]);
+            }
+            if ($appointment->status === 'completed' || $appointment->status === 'cancelled' || $appointment->status === 'in_progress') {
+                return response()->json([
+                    'status' => 422,
+                    'msg' => 'Completed, cancelled, or in-progress appointments cannot be modified.',
                 ]);
             }
 
@@ -388,7 +433,44 @@ class AppointmentController extends Controller
             $originalStatus = $appointment->getOriginal('status');
             $newStatus = $request->input('status');
             $appointment->status = $newStatus;
+            if ($newStatus === 'cancelled') {
+                $appointment->cancellation_reason = $request->input('cancellation_reason', $appointment->cancellation_reason);
+                $appointment->cancelled_at = now();
+            } else {
+                $appointment->cancellation_reason = null;
+                $appointment->cancelled_at = null;
+            }
             $appointment->notes = $request->input('notes', $appointment->notes);
+
+            // Update patient profile with optional fields if provided
+            $patient = User::with('patientProfile')->find($request->input('patient_id'));
+            if ($patient && $patient->patientProfile) {
+                $patientProfile = $patient->patientProfile;
+                
+                if ($request->has('emergency_contact_name')) {
+                    $patientProfile->emergency_contact_name = $request->input('emergency_contact_name');
+                }
+                if ($request->has('emergency_contact_phone')) {
+                    $patientProfile->emergency_contact_phone = $request->input('emergency_contact_phone');
+                }
+                if ($request->has('blood_group')) {
+                    $patientProfile->blood_group = $request->input('blood_group');
+                }
+                if ($request->has('medical_history')) {
+                    $patientProfile->medical_history = $request->input('medical_history');
+                }
+                if ($request->has('current_medications')) {
+                    $patientProfile->current_medications = $request->input('current_medications');
+                }
+                if ($request->has('insurance_provider')) {
+                    $patientProfile->insurance_provider = $request->input('insurance_provider');
+                }
+                if ($request->has('insurance_number')) {
+                    $patientProfile->insurance_number = $request->input('insurance_number');
+                }
+                
+                $patientProfile->save();
+            }
 
             // Check if reactivating a cancelled/no_show appointment
             $inactiveStatuses = ['cancelled', 'no_show', 'completed'];
@@ -429,8 +511,56 @@ class AppointmentController extends Controller
                     ]);
                 }
             }
-
             $appointment->save();
+
+            // Send WhatsApp notification via NotifyUserEvent if status changed
+            $statusChanged = $originalStatus !== $newStatus;
+            $patient = $appointment->patient;
+            $doctor = $appointment->doctor;
+
+            if ($patient && $patient->phone && in_array($newStatus, ['cancelled', 'confirmed'])) {
+
+                $patientName = trim($patient->first_name . ' ' . $patient->last_name);
+
+                $templateName = $newStatus === 'cancelled'
+                    ? WhatsappTemplating::CANCEL_APPOINTMENT->value
+                    : WhatsappTemplating::CONFIRM_APPOINTMENT->value;
+
+                if ($newStatus === 'cancelled') {
+
+                    // ✅ EXACT template order
+                    $parameters = [
+                        ['key' => 'name', 'type' => 'text', 'text' => $patientName],
+                        ['key' => 'cancellation_reason', 'type' => 'text', 'text' => $appointment->cancellation_reason ?? 'Not Available',],
+                    ];
+
+                } else {
+                    // confirmed
+                    $appointmentDate = Carbon::parse($appointment->appointment_date)->format('F jS');
+                    $appointmentTime = Carbon::parse($appointment->appointment_time)->format('g:i A');
+                    $doctorName = 'Dr. ' . trim($doctor->first_name . ' ' . $doctor->last_name);
+
+                    $parameters = [
+                        ['key' => 'name', 'type' => 'text', 'text' => $patientName],
+                        ['key' => 'doctor_name', 'type' => 'text', 'text' => $doctorName],
+                        ['key' => 'date', 'type' => 'text', 'text' => $appointmentDate],
+                        ['key' => 'time', 'type' => 'text', 'text' => $appointmentTime],
+                    ];
+                }
+
+                $params = [
+                    'phone_number' => $patient->phone,
+                    'template_name' => $templateName,
+                    'components' => [
+                        [
+                            'type' => 'body',
+                            'parameters' => $parameters,
+                        ],
+                    ],
+                ];
+                event(new NotifiyUserEvent($params));
+            }
+
 
             return response()->json([
                 'status' => 200,
@@ -502,4 +632,5 @@ class AppointmentController extends Controller
             ]);
         }
     }
+
 }

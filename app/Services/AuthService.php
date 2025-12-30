@@ -17,23 +17,33 @@ class AuthService
     {
         $remember = $credentials['remember'] ?? false;
 
-        // Attempt to authenticate
-        if (! Auth::attempt([
-            'email' => $credentials['email'],
-            'password' => $credentials['password'],
-        ], $remember)) {
+        // Attempt to authenticate with username instead of email
+        if (
+            ! Auth::attempt([
+                'username' => $credentials['username'],
+                'password' => $credentials['password'],
+            ], $remember)
+        ) {
             throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
+                'username' => ['The provided credentials are incorrect.'],
             ]);
         }
 
         $user = Auth::user();
 
+        // Prevent patients from logging in through staff login
+        if ($user->role === 'patient') {
+            Auth::logout();
+            throw ValidationException::withMessages([
+                'username' => ['Patients cannot login here. Please use the Patient Portal.'],
+            ]);
+        }
+
         // Check if user is active
         if ($user->status !== 'active') {
             Auth::logout();
             throw ValidationException::withMessages([
-                'email' => ['Your account is not active. Please contact support.'],
+                'username' => ['Your account is not active. Please contact support.'],
             ]);
         }
 
@@ -76,7 +86,8 @@ class AuthService
     public function validateLoginData(array $data): array
     {
         return validator($data, [
-            'email' => ['required', 'string', 'email', 'max:255'],
+            'username' => 'required|string',
+            // 'email' => ['required', 'string', 'email', 'max:255'],
             'password' => ['required', 'string', 'min:8'],
             'remember' => ['boolean'],
         ])->validate();

@@ -1,21 +1,26 @@
 <?php
 
-use App\Http\Controllers\Admin\AdminDashboardController;
-use App\Http\Controllers\Admin\AppointmentController;
-use App\Http\Controllers\Admin\CalendarController as AdminCalendarController;
+use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Admin\LeaveController;
 use App\Http\Controllers\Admin\DoctorsController;
 use App\Http\Controllers\Admin\PatientController;
-use App\Http\Controllers\Admin\SpecialtiesController;
-use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Doctor\CalendarController;
-use App\Http\Controllers\Doctor\DoctorAppointmentController;
+use App\Http\Controllers\Admin\AppointmentController;
+use App\Http\Controllers\Admin\SpecialtiesController;
+use App\Http\Controllers\Frontdesk\HistoryController;
+use App\Http\Controllers\Patient\DashboardController;
+use App\Http\Controllers\Doctor\DoctorLeaveController;
+use App\Http\Controllers\Patient\PatientAuthController;
+use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Doctor\DoctorDashboardController;
+use App\Http\Controllers\Public\BookAppointmentController;
+use App\Http\Controllers\Doctor\DoctorAppointmentController;
 use App\Http\Controllers\Frontdesk\AddAppointmentController;
 use App\Http\Controllers\Frontdesk\DoctorScheduleController;
 use App\Http\Controllers\Frontdesk\FrontDashboardController;
-use App\Http\Controllers\Frontdesk\HistoryController;
+use App\Http\Controllers\Admin\CalendarController as AdminCalendarController;
 use App\Http\Controllers\Frontdesk\PatientController as FrontPatientController;
-use App\Http\Controllers\Public\BookAppointmentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -53,6 +58,8 @@ Route::controller(AuthController::class)->group(function () {
 Route::get('booking', [BookAppointmentController::class, 'index'])->name('booking');
 Route::post('booking', [BookAppointmentController::class, 'store'])->name('booking.store');
 Route::get('/get-time-slots', [BookAppointmentController::class, 'getSlots'])->name('get.time.slots');
+Route::get('/get-doctor-leave-dates', [BookAppointmentController::class, 'getDoctorLeaveDates'])->name('get.doctor.leave.dates');
+Route::get('/check-doctor-leave', [BookAppointmentController::class, 'checkDoctorLeave'])->name('check.doctor.leave');
 Route::get('/download-appointment', [BookAppointmentController::class, 'downloadPDFAppointment'])->name('download.appointment');
 
 // Admin Routes
@@ -98,6 +105,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::get('/calendar/week', [AdminCalendarController::class, 'getWeekView'])->name('calendar.week');
     Route::get('/calendar/day', [AdminCalendarController::class, 'getDayView'])->name('calendar.day');
     Route::get('/appointments/{id}/details', [AdminCalendarController::class, 'getAppointmentDetails'])->name('appointments.details');
+
+    // Settings
+    Route::get('/settings', [SettingController::class, 'index'])->name('settings');
+    Route::post('/settings/update', [SettingController::class, 'update'])->name('settings.update');
+
+    // Admin Leave Management
+    Route::get('/leaves', [LeaveController::class, 'index'])->name('leaves');
 });
 
 // Doctor Routes
@@ -114,12 +128,18 @@ Route::prefix('doctor')->name('doctor.')->middleware(['auth', 'role:doctor'])->g
     Route::post('appointments/{id}/prescription', [DoctorAppointmentController::class, 'savePrescription'])->name('appointments.prescription');
     Route::post('appointments/{id}/follow-up', [DoctorAppointmentController::class, 'scheduleFollowUp'])->name('appointments.followup');
     Route::get('appointments/available-slots', [DoctorAppointmentController::class, 'getAvailableSlots'])->name('appointments.available-slots');
+    Route::post('appointments/{id}/reschedule', [DoctorAppointmentController::class, 'reschedule'])->name('appointments.reschedule');
+    Route::post('appointments/{id}/cancel', [DoctorAppointmentController::class, 'cancel'])->name('appointments.cancel');
+    Route::post('appointments/{id}/update-status', [DoctorAppointmentController::class, 'updateStatus'])->name('appointments.update-status');
 
     Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar');
     Route::get('/calendar/data', [CalendarController::class, 'getCalendarData'])->name('calendar.data');
     Route::get('/calendar/schedule', [CalendarController::class, 'getWeeklySchedule'])->name('calendar.schedule');
     Route::get('/calendar/appointments', [CalendarController::class, 'getDateAppointments'])->name('calendar.appointments');
     Route::post('/calendar/schedule/update', [CalendarController::class, 'updateSchedule'])->name('calendar.schedule.update');
+
+    Route::get('/leaves', [DoctorLeaveController::class, 'index'])->name('leaves');
+    Route::post('/leaves', [DoctorLeaveController::class, 'store'])->name('leaves.store');
 });
 
 // Front Desk Routes
@@ -145,8 +165,20 @@ Route::prefix('frontdesk')->name('frontdesk.')->middleware(['auth', 'role:frontd
 });
 
 // Patient Routes
+// Patient Authentication (separate from staff login)
+Route::prefix('patient')->name('patient.')->group(function () {
+    Route::get('/login', [PatientAuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [PatientAuthController::class, 'login'])->name('login.post');
+    Route::post('/logout', [PatientAuthController::class, 'logout'])->name('logout');
+});
+
+// Patient Protected Routes
 Route::prefix('patient')->name('patient.')->middleware(['auth', 'role:patient'])->group(function () {
-    Route::get('/dashboard', function () {
-        return view('patient.dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/cancel-appointment', [DashboardController::class, 'cancelAppointment'])->name('cancel-appointment');
+    Route::post('/reschedule-appointment', [DashboardController::class, 'rescheduleAppointment'])->name('reschedule-appointment');
+    Route::get('/available-time-slots', [DashboardController::class, 'getAvailableTimeSlots'])->name('available-time-slots');
+    Route::get('/medical-history', [DashboardController::class, 'getMedicalHistory'])->name('medical-history');
+    Route::get('/prescription/{id}/download', [DashboardController::class, 'downloadPrescription'])->name('prescription.download');
+    Route::post('appointments/store', [DashboardController::class, 'storeAppointment'])->name('store.appointment');
 });

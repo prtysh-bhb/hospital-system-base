@@ -26,7 +26,7 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->text('cancellation_reason')->nullable();
             $table->foreignId('booked_by')->nullable()->constrained('users')->onDelete('set null');
-            $table->enum('booked_via', ['online', 'frontdesk', 'phone', 'admin'])->default('online');
+            $table->enum('booked_via', ['online', 'frontdesk', 'phone', 'admin', 'patient'])->default('online');
             $table->boolean('reminder_sent')->default(false);
             $table->timestamps();
             $table->softDeletes();

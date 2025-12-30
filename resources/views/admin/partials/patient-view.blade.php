@@ -101,6 +101,44 @@
         </div>
     </div>
 
+    <!-- Medical Information Section -->
+    <div class="pt-6 border-t border-gray-200">
+        <h5 class="text-lg font-semibold text-gray-800 mb-3">Medical Information</h5>
+        <div class="grid grid-cols-1 gap-4">
+            <div>
+                <label class="text-sm font-medium text-gray-600">Medical History</label>
+                <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mt-1">
+                    <p class="text-sm text-gray-700">{{ $patient->medical_history ?? 'No medical history recorded' }}
+                    </p>
+                </div>
+            </div>
+
+            <div>
+                <label class="text-sm font-medium text-gray-600">Current Medications</label>
+                <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mt-1">
+                    <p class="text-sm text-gray-700">{{ $patient->current_medications ?? 'No medications recorded' }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Insurance Information Section -->
+    <div class="pt-6 border-t border-gray-200">
+        <h5 class="text-lg font-semibold text-gray-800 mb-3">Insurance Information</h5>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="text-sm font-medium text-gray-600">Insurance Provider</label>
+                <p class="text-gray-800">{{ $patient->insurance_provider ?? 'N/A' }}</p>
+            </div>
+
+            <div>
+                <label class="text-sm font-medium text-gray-600">Insurance Number</label>
+                <p class="text-gray-800">{{ $patient->insurance_number ?? 'N/A' }}</p>
+            </div>
+        </div>
+    </div>
+
     <!-- Medical History Section -->
     <div class="pt-6 border-t border-gray-200">
         <h5 class="text-lg font-semibold text-gray-800 mb-3">Medical History</h5>

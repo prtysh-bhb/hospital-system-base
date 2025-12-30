@@ -56,12 +56,27 @@
                 </div>
 
                 <div>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">UserName <span
+                            class="text-red-600">*</span></label>
+                    <input type="text" name="username" value="{{ old('username', $doctor->user->username ?? '') }}"
+                        placeholder="Enter username" minlength="2" maxlength="100" pattern="[a-zA-Z\s]+"
+                        title="Name can only contain letters and spaces (minimum 2 characters)"
+                        oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')"
+                        class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border {{ $errors->has('username') ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-sky-500' }} rounded-lg focus:ring-2 focus:border-transparent">
+                    <span id="username_error" class="text-red-600 text-sm mt-1 hidden"></span>
+                    @error('username')
+                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Gender <span
                             class="text-red-600">*</span></label>
                     <select name="gender"
                         class="w-full px-4 py-2 border {{ $errors->has('gender') ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-sky-500' }} rounded-lg focus:ring-2 focus:border-transparent">
                         <option value="">Select Gender</option>
-                        <option value="male" {{ old('gender', $doctor->user->gender ?? '') == 'male' ? 'selected' : '' }}>
+                        <option value="male"
+                            {{ old('gender', $doctor->user->gender ?? '') == 'male' ? 'selected' : '' }}>
                             Male</option>
                         <option value="female"
                             {{ old('gender', $doctor->user->gender ?? '') == 'female' ? 'selected' : '' }}>
@@ -114,7 +129,16 @@
                         <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                     @enderror
                 </div>
-
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Address <span
+                            class="text-red-600">*</span></label>
+                    <textarea name="address" rows="1" placeholder="Enter address" minlength="10" maxlength="500"
+                        title="Address must be at least 10 characters"
+                        class="w-full px-4 py-2 border {{ $errors->has('address') ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-sky-500' }} rounded-lg focus:ring-2 focus:border-transparent">{{ old('address', $doctor->user->address ?? '') }}</textarea>
+                    @error('address')
+                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
                 @if (isset($doctor))
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Status <span
@@ -148,16 +172,7 @@
                     </div>
                 @endif
 
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Address <span
-                            class="text-red-600">*</span></label>
-                    <textarea name="address" rows="3" placeholder="Enter address" minlength="10" maxlength="500"
-                        title="Address must be at least 10 characters"
-                        class="w-full px-4 py-2 border {{ $errors->has('address') ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-sky-500' }} rounded-lg focus:ring-2 focus:border-transparent">{{ old('address', $doctor->user->address ?? '') }}</textarea>
-                    @error('address')
-                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
+
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Profile Photo</label>
                     @if (isset($doctor) && $doctor->user->profile_image)

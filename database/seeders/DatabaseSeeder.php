@@ -15,13 +15,16 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
-            specialitieseeder::class,
+            SpecialtiesSeeder::class,
             UserSeeder::class,
             DoctorProfileSeeder::class,
             PatientProfileSeeder::class,
             DoctorScheduleSeeder::class,
             AppointmentSeeder::class,
             PrescriptionSeeder::class,
+            SettingCategories::class,
+            SettingsSeeder::class,
+            WhatsappTemplateSeeder::class,
         ]);
     }
 }

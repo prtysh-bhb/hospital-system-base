@@ -102,6 +102,83 @@
                             class="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 text-sm sm:text-base"
                             placeholder="Enter full address..."></textarea>
                     </div>
+
+                    <!-- Emergency Contact (Conditional) -->
+                    @if (isset($formSettings['show_emergency_contact']) && $formSettings['show_emergency_contact'])
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Emergency Contact
+                                Name</label>
+                            <input type="text" name="emergency_contact_name" id="emergency_contact_name"
+                                class="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 text-sm sm:text-base"
+                                placeholder="Contact person name">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Emergency Contact
+                                Phone</label>
+                            <input type="text" name="emergency_contact_phone" id="emergency_contact_phone"
+                                class="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 text-sm sm:text-base"
+                                placeholder="Contact phone number">
+                        </div>
+                    @endif
+
+                    <!-- Blood Group (Conditional) -->
+                    @if (isset($formSettings['show_blood_group']) && $formSettings['show_blood_group'])
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Blood Group</label>
+                            <select name="blood_group" id="blood_group"
+                                class="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 text-sm sm:text-base">
+                                <option value="">Select blood group</option>
+                                <option value="A+">A+</option>
+                                <option value="A-">A-</option>
+                                <option value="B+">B+</option>
+                                <option value="B-">B-</option>
+                                <option value="AB+">AB+</option>
+                                <option value="AB-">AB-</option>
+                                <option value="O+">O+</option>
+                                <option value="O-">O-</option>
+                            </select>
+                        </div>
+                    @endif
+
+                    <!-- Medical History (Conditional) -->
+                    @if (isset($formSettings['show_medical_history']) && $formSettings['show_medical_history'])
+                        <div class="col-span-1 md:col-span-2">
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Medical History</label>
+                            <textarea name="medical_history" id="medical_history" rows="2"
+                                class="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 text-sm sm:text-base"
+                                placeholder="Any past medical conditions, surgeries, etc."></textarea>
+                        </div>
+                    @endif
+
+                    <!-- Current Medications (Conditional) -->
+                    @if (isset($formSettings['show_current_medications']) && $formSettings['show_current_medications'])
+                        <div class="col-span-1 md:col-span-2">
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Current
+                                Medications</label>
+                            <textarea name="current_medications" id="current_medications" rows="2"
+                                class="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 text-sm sm:text-base"
+                                placeholder="List any medications currently taking"></textarea>
+                        </div>
+                    @endif
+
+                    <!-- Insurance Details (Conditional) -->
+                    @if (isset($formSettings['show_insurance_details']) && $formSettings['show_insurance_details'])
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Insurance
+                                Provider</label>
+                            <input type="text" name="insurance_provider" id="insurance_provider"
+                                class="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 text-sm sm:text-base"
+                                placeholder="Insurance company name">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Insurance Number</label>
+                            <input type="text" name="insurance_number" id="insurance_number"
+                                class="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 text-sm sm:text-base"
+                                placeholder="Policy/Member number">
+                        </div>
+                    @endif
                 </div>
             </div>
 

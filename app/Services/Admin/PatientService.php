@@ -82,6 +82,10 @@ class PatientService
                 'blood_group' => $data['blood_group'] ?? null,
                 'emergency_contact_phone' => $data['emergency_contact'] ?? null,
                 'emergency_contact_name' => $data['emergency_contact_name'] ?? null,
+                'medical_history' => $data['medical_history'] ?? null,
+                'current_medications' => $data['current_medications'] ?? null,
+                'insurance_provider' => $data['insurance_provider'] ?? null,
+                'insurance_number' => $data['insurance_number'] ?? null,
             ];
 
             \Log::info('Updating patient profile', ['patient_id' => $patient->id, 'data' => $patientUpdateData]);

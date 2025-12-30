@@ -157,32 +157,37 @@
 
         const minDate = new Date(today);
         const maxDate = new Date(today);
-        maxDate.setDate(maxDate.getDate() + 60); // 60 days from today
-
+        maxDate.setDate(maxDate.getDate() +
+            // {{ env('ADVANCE_DAYS_FOR_APPOINTMENT', 30) }}); // 60 days from today
+           {{ $publicAdvanceBookingDays }});
         let currentMonth = today.getMonth();
         let currentYear = today.getFullYear();
         let selectedDate = dateInput.value || null;
+        let leaveDates = {}; // Store doctor's leave dates
 
         const monthNames = [
             'January', 'February', 'March', 'April', 'May', 'June',
             'July', 'August', 'September', 'October', 'November', 'December'
         ];
 
-        // Initialize calendar
-        renderCalendar();
-        updateNavigationButtons();
-
-        // If there's a pre-selected date, load its slots
-        // Otherwise, auto-select today and fetch its slots
-        if (selectedDate) {
-            fetchSlots(selectedDate);
-        } else {
-            // Auto-select today
-            selectedDate = formatDate(today);
-            dateInput.value = selectedDate;
+        // Fetch doctor's leave dates first
+        fetchDoctorLeaveDates().then(() => {
+            // Initialize calendar
             renderCalendar();
-            fetchSlots(selectedDate);
-        }
+            updateNavigationButtons();
+
+            // If there's a pre-selected date, load its slots
+            // Otherwise, auto-select today and fetch its slots
+            if (selectedDate) {
+                fetchSlots(selectedDate);
+            } else {
+                // Auto-select today
+                selectedDate = formatDate(today);
+                dateInput.value = selectedDate;
+                renderCalendar();
+                fetchSlots(selectedDate);
+            }
+        });
 
         // Month navigation
         prevMonthBtn.addEventListener('click', function() {
@@ -241,7 +246,10 @@
 
                 const isPast = date < today;
                 const isFuture = date > maxDate;
-                const isDisabled = isPast || isFuture;
+                const leaveInfo = leaveDates[dateStr];
+                const isOnFullDayLeave = leaveInfo && leaveInfo.type === 'full_day';
+                const isOnHalfDayLeave = leaveInfo && leaveInfo.type === 'half_day';
+                const isDisabled = isPast || isFuture || isOnFullDayLeave;
                 const isSelected = dateStr === selectedDate;
                 const isToday = date.getTime() === today.getTime();
 
@@ -258,16 +266,36 @@
                     classes += ' text-gray-800 hover:bg-sky-50 cursor-pointer border border-gray-200';
                 }
 
-                if (!isDisabled) {
-                    html += `<div class="calendar-day ${classes}" data-date="${dateStr}">${day}</div>`;
-                } else {
-                    html += `<div class="${classes}">${day}</div>`;
+                let dayContent = `${day}`;
+
+                if (isOnFullDayLeave) {
+                    dayContent =
+                        `<div class="line-through">${day}</div><div class="text-[8px] text-red-400 font-semibold">Leave</div>`;
+                }
+                else if (isOnHalfDayLeave && !isDisabled) {
+                    const halfDaySlot = leaveInfo.half_day_slot;
+                    let indicator = '';
+                    if (halfDaySlot === 'morning') {
+                        indicator = '<div class="text-[8px] text-orange-500 font-semibold">AM Leave</div>';
+                    } else if (halfDaySlot === 'afternoon') {
+                        indicator = '<div class="text-[8px] text-orange-500 font-semibold">PM Leave</div>';
+                    } else {
+                        indicator = '<div class="text-[8px] text-orange-500 font-semibold">½ Leave</div>';
+                    }
+                    dayContent = `<div>${day}</div>${indicator}`;
+                }
+
+                if (isDisabled) {
+                    html += `<div class="${classes}">${dayContent}</div>`;
+                }
+                else {
+                    html += `<div class="calendar-day ${classes}" data-date="${dateStr}">${dayContent}</div>`;
                 }
             }
 
             calendarDays.innerHTML = html;
 
-            // Re-attach event listeners for date selection
+            
             document.querySelectorAll('.calendar-day').forEach(dayEl => {
                 dayEl.addEventListener('click', function() {
                     const date = this.dataset.date;
@@ -290,6 +318,18 @@
             });
         }
 
+        function fetchDoctorLeaveDates() {
+            return fetch(`{{ route('get.doctor.leave.dates') }}`)
+                .then(response => response.json())
+                .then(data => {
+                    leaveDates = data.leave_dates || {};
+                })
+                .catch(error => {
+                    console.error('Error fetching leave dates:', error);
+                    leaveDates = {};
+                });
+        }
+
         function fetchSlots(date) {
             // Show loading
             slotsContainer.classList.add('hidden');
@@ -302,7 +342,25 @@
                     slotsContainer.classList.remove('hidden');
 
                     if (data.slots && data.slots.length > 0) {
+                        const leaveInfo = leaveDates[date];
                         let html = '';
+
+                        // Show half-day leave notice if applicable
+                        if (leaveInfo && leaveInfo.type === 'half_day') {
+                            const halfDayMsg = leaveInfo.half_day_slot === 'morning' ?
+                                'Morning slots unavailable due to leave' :
+                                leaveInfo.half_day_slot === 'afternoon' ?
+                                'Afternoon slots unavailable due to leave' :
+                                'Limited slots due to half-day leave';
+                            html += `
+                                <div class="col-span-full mb-3">
+                                    <div class="bg-orange-50 border border-orange-200 rounded-lg p-3 text-center">
+                                        <p class="text-xs text-orange-700 font-medium">${halfDayMsg}</p>
+                                    </div>
+                                </div>
+                            `;
+                        }
+
                         data.slots.forEach(slot => {
                             html += `
                                 <label class="cursor-pointer slot-option">
@@ -332,11 +390,24 @@
                             });
                         });
                     } else {
-                        slotsContainer.innerHTML = `
-                            <p class="text-red-500 text-sm col-span-full text-center py-4">
-                                No slots available for selected date. Please choose another date.
-                            </p>
-                        `;
+                        const message = data.message ||
+                            'No slots available for selected date. Please choose another date.';
+                        const leaveInfo = leaveDates[date];
+
+                        let messageHtml = `
+                            <div class="col-span-full text-center py-4">
+                                <svg class="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <p class="text-gray-500 text-sm">${message}</p>`;
+
+                        if (leaveInfo && leaveInfo.type === 'full_day') {
+                            messageHtml +=
+                                `<p class="text-xs text-red-600 mt-1">Doctor is on full-day leave</p>`;
+                        }
+
+                        messageHtml += `</div>`;
+                        slotsContainer.innerHTML = messageHtml;
                     }
                 })
                 .catch(error => {

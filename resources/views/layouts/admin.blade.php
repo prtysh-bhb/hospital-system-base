@@ -9,6 +9,7 @@
     <title>@yield('title', 'Admin Dashboard') - MediCare HMS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
     <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
@@ -66,10 +67,9 @@
     <!-- Sidebar -->
     <aside id="sidebar"
         class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform -translate-x-full transition-transform duration-300 ease-in-out lg:translate-x-0 lg:inset-0">
-        <div class="p-4 sm:p-6 border-b flex items-center justify-between">
+        <div class="p-4 sm:p-5 border-b flex items-center justify-between">
             <div>
                 <h1 class="text-xl sm:text-2xl font-bold text-sky-700">MediCare HMS</h1>
-                <p class="text-xs sm:text-sm text-gray-500">Admin Panel</p>
             </div>
             <button id="close-sidebar" class="lg:hidden text-gray-500 hover:text-gray-700">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -128,6 +128,24 @@
                         d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 <span class="ml-2">Calendar</span>
+            </a>
+
+            <a href="{{ route('admin.settings') }}"
+                class="flex items-center px-3 sm:px-4 py-2 sm:py-3 mb-2 {{ request()->routeIs('admin.settings') ? 'text-white bg-sky-600' : 'text-gray-700 hover:bg-gray-100' }} rounded-lg text-sm sm:text-base">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V4m0 16v-4m8-8h4m-16 0H4m12.364 10.364l2.828 2.828m-12.728-12.728l2.828 2.828m0 8.486l-2.828 2.828m12.728-12.728l-2.828 2.828" />
+                </svg>
+                <span class="ml-2">Settings</span>
+            </a>
+
+            <a href="{{ route('admin.leaves') }}"
+                class="flex items-center px-3 sm:px-4 py-2 sm:py-3 mb-2 {{ request()->routeIs('admin.leaves') ? 'text-white bg-sky-600' : 'text-gray-700 hover:bg-gray-100' }} rounded-lg text-sm sm:text-base">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V4m0 16v-4m8-8h4m-16 0H4m12.364 10.364l2.828 2.828m-12.728-12.728l2.828 2.828m0 8.486l-2.828 2.828m12.728-12.728l-2.828 2.828" />
+                </svg>
+                <span class="ml-2">Leaves</span>
             </a>
 
             <form action="{{ route('logout') }}" method="POST" class="mt-8">

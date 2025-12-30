@@ -3,137 +3,108 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use App\Models\User;
 
 class UserSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
-    public function run()
+    public function run(): void
     {
-        $users = [];
-
-        // Admin Users
-        $users[] = [
-            'role' => 'admin',
-            'email' => 'admin@gmail.com',
-            'password' => Hash::make('admin@123'),
-            'first_name' => 'System',
-            'last_name' => 'Administrator',
-            'phone' => '+1-555-0100',
-            'date_of_birth' => '1980-01-15',
-            'gender' => 'male',
-            'address' => '123 Hospital Ave, Medical City',
-            'status' => 'active',
-            'email_verified_at' => now(),
-            'created_at' => now(),
-            'updated_at' => now(),
+        /*
+        |------------------------------------------------------------------
+        | ADMIN USERS
+        |------------------------------------------------------------------
+        */
+        $admins = [
+            [
+                'role' => 'admin',
+                'email' => 'admin@gmail.com',
+                'password' => 'admin@123',
+                'first_name' => 'System',
+                'last_name' => 'Administrator',
+                'phone' => $this->Phonegenerator(),
+                'date_of_birth' => '1980-01-15',
+                'gender' => 'male',
+                'address' => '123 Hospital Ave, Medical City',
+                'status' => 'active',
+            ],
         ];
 
-        // Front Desk Staff
-        $users[] = [
-            'role' => 'frontdesk',
-            'email' => 'frontdesk@medicare.com',
-            'password' => Hash::make('admin@123'),
-            'first_name' => 'Sarah',
-            'last_name' => 'Johnson',
-            'phone' => '+1-555-0101',
-            'date_of_birth' => '1990-03-20',
-            'gender' => 'female',
-            'address' => '456 Reception St, Medical City',
-            'status' => 'active',
-            'email_verified_at' => now(),
-            'created_at' => now(),
-            'updated_at' => now(),
+        $this->upsertUsers($admins);
+
+        /*
+        |------------------------------------------------------------------
+        | FRONT DESK USERS
+        |------------------------------------------------------------------
+        */
+        $frontdesks = [
+            [
+                'role' => 'frontdesk',
+                'email' => 'frontdesk@medicare.com',
+                'password' => 'admin@123',
+                'first_name' => 'Sarah',
+                'last_name' => 'Johnson',
+                'phone' => $this->Phonegenerator(),
+                'date_of_birth' => '1990-03-20',
+                'gender' => 'female',
+                'address' => '456 Reception St, Medical City',
+                'status' => 'active',
+            ],
+            [
+                'role' => 'frontdesk',
+                'email' => 'reception@medicare.com',
+                'password' => 'admin@123',
+                'first_name' => 'Michael',
+                'last_name' => 'Brown',
+                'phone' => $this->Phonegenerator(),
+                'date_of_birth' => '1992-07-11',
+                'gender' => 'male',
+                'address' => '789 Front Desk Rd, Medical City',
+                'status' => 'active',
+            ],
         ];
 
-        $users[] = [
-            'role' => 'frontdesk',
-            'email' => 'reception@medicare.com',
-            'password' => Hash::make('admin@123'),
-            'first_name' => 'Michael',
-            'last_name' => 'Brown',
-            'phone' => '+1-555-0102',
-            'date_of_birth' => '1992-07-11',
-            'gender' => 'male',
-            'address' => '789 Front Desk Rd, Medical City',
-            'status' => 'active',
-            'email_verified_at' => now(),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ];
+        $this->upsertUsers($frontdesks);
 
-        // Doctors (will be linked to specialties)
+        /*
+        |------------------------------------------------------------------
+        | DOCTORS
+        |------------------------------------------------------------------
+        */
         $doctors = [
-            [
-                'first_name' => 'Rajesh',
-                'last_name' => 'Sharma',
-                'email' => 'dr.sharma@medicare.com',
-                'specialty' => 'Cardiology',
-                'qualification' => 'MD, DM Cardiology',
-                'experience' => 15,
-                'fee' => 1500.00,
-            ],
-            [
-                'first_name' => 'Priya',
-                'last_name' => 'Mehta',
-                'email' => 'dr.mehta@medicare.com',
-                'specialty' => 'Pediatrics',
-                'qualification' => 'MD Pediatrics, DCH',
-                'experience' => 12,
-                'fee' => 1200.00,
-            ],
-            [
-                'first_name' => 'Amit',
-                'last_name' => 'Verma',
-                'email' => 'dr.verma@medicare.com',
-                'specialty' => 'Orthopedics',
-                'qualification' => 'MS Orthopedics',
-                'experience' => 10,
-                'fee' => 1300.00,
-            ],
-            [
-                'first_name' => 'Anita',
-                'last_name' => 'Desai',
-                'email' => 'dr.desai@medicare.com',
-                'specialty' => 'Dermatology',
-                'qualification' => 'MD Dermatology',
-                'experience' => 8,
-                'fee' => 1100.00,
-            ],
-            [
-                'first_name' => 'Sanjay',
-                'last_name' => 'Patel',
-                'email' => 'dr.patel@medicare.com',
-                'specialty' => 'Neurology',
-                'qualification' => 'DM Neurology',
-                'experience' => 14,
-                'fee' => 1600.00,
-            ],
+            ['Rajesh', 'Sharma', 'dr.sharma@medicare.com'],
+            ['Priya', 'Mehta', 'mehta@medicare.com'],
+            ['Amit', 'Verma', 'verma@medicare.com'],
+            ['Anita', 'Desai', 'desai@medicare.com'],
+            ['Sanjay', 'Patel', 'patel@medicare.com'],
         ];
 
         foreach ($doctors as $doctor) {
-            $users[] = [
-                'role' => 'doctor',
-                'email' => $doctor['email'],
-                'password' => Hash::make('admin@123'),
-                'first_name' => $doctor['first_name'],
-                'last_name' => $doctor['last_name'],
-                'phone' => '+1-555-01'.rand(10, 99),
-                'date_of_birth' => '197'.rand(5, 9).'-'.rand(1, 12).'-'.rand(1, 28),
-                'gender' => rand(0, 1) ? 'male' : 'female',
-                'address' => rand(100, 999).' Doctor Lane, Medical City',
-                'status' => 'active',
-                'email_verified_at' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
+            User::updateOrCreate(
+                ['email' => $doctor[2]],
+                [
+                    'role' => 'doctor',
+                    'username' => $doctor[2],
+                    'password' => Hash::make('admin@123'),
+                    'first_name' => $doctor[0],
+                    'last_name' => $doctor[1],
+                    'phone' => $this->Phonegenerator(),
+                    'date_of_birth' => '197' . rand(5, 9) . '-' . rand(1, 12) . '-' . rand(1, 28),
+                    'gender' => rand(0, 1) ? 'male' : 'female',
+                    'address' => rand(100, 999) . ' Doctor Lane, Medical City',
+                    'status' => 'active',
+                    'email_verified_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
         }
 
-        // Patients
-        $patientNames = [
+        /*
+        |------------------------------------------------------------------
+        | PATIENTS
+        |------------------------------------------------------------------
+        */
+        $patients = [
             ['Rahul', 'Kumar'],
             ['Sneha', 'Singh'],
             ['Vikram', 'Yadav'],
@@ -148,24 +119,66 @@ class UserSeeder extends Seeder
             ['Suresh', 'Nair'],
         ];
 
-        foreach ($patientNames as $index => $name) {
-            $users[] = [
-                'role' => 'patient',
-                'email' => strtolower($name[0]).'.'.strtolower($name[1]).'@patient.com',
-                'password' => Hash::make('admin@123'),
-                'first_name' => $name[0],
-                'last_name' => $name[1],
-                'phone' => '+1-555-02'.str_pad($index, 2, '0', STR_PAD_LEFT),
-                'date_of_birth' => '19'.rand(80, 99).'-'.rand(1, 12).'-'.rand(1, 28),
-                'gender' => rand(0, 1) ? 'male' : 'female',
-                'address' => rand(100, 999).' Patient Street, Medical City',
-                'status' => 'active',
-                'email_verified_at' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
-        }
+        foreach ($patients as $patient) {
 
-        DB::table('users')->insert($users);
+            $email = strtolower($patient[0]) . '.' . strtolower($patient[1]) . '@patient.com';
+            $phone = $this->Phonegenerator();
+
+            User::updateOrCreate(
+                ['email' => $email],
+                [
+                    'role' => 'patient',
+                    'username' => $email,
+                    'password' => Hash::make($phone), // password = phone
+                    'first_name' => $patient[0],
+                    'last_name' => $patient[1],
+                    'phone' => $phone,
+                    'date_of_birth' => '19' . rand(80, 99) . '-' . rand(1, 12) . '-' . rand(1, 28),
+                    'gender' => rand(0, 1) ? 'male' : 'female',
+                    'address' => rand(100, 999) . ' Patient Street, Medical City',
+                    'status' => 'active',
+                    'email_verified_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
+        }
+    }
+
+    /*
+    |------------------------------------------------------------------
+    | COMMON UPSERT
+    |------------------------------------------------------------------
+    */
+    private function upsertUsers(array $users): void
+    {
+        foreach ($users as $user) {
+            User::updateOrCreate(
+                ['email' => $user['email']],
+                [
+                    'role' => $user['role'],
+                    'username' => $user['email'],
+                    'password' => Hash::make($user['password']),
+                    'first_name' => $user['first_name'],
+                    'last_name' => $user['last_name'],
+                    'phone' => $user['phone'],
+                    'date_of_birth' => $user['date_of_birth'],
+                    'gender' => $user['gender'],
+                    'address' => $user['address'],
+                    'status' => $user['status'],
+                    'email_verified_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
+        }
+    }
+
+    /*
+    |------------------------------------------------------------------
+    | PHONE GENERATOR
+    |------------------------------------------------------------------
+    */
+    private function Phonegenerator(): string
+    {
+        return '91' . rand(6000000000, 9999999999);
     }
 }

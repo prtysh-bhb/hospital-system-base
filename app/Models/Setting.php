@@ -8,12 +8,14 @@ use Illuminate\Database\Eloquent\Model;
 class Setting extends Model
 {
     use HasFactory;
-
+    protected $table = 'settings';
     protected $fillable = [
         'key',
         'value',
         'type',
-        'group',
+        'setting_category_id',
+        'order',
+        'status',
         'description',
     ];
 
@@ -60,6 +62,11 @@ class Setting extends Model
         return $setting ? $setting->value : $default;
     }
 
+    public function settingCategory()
+    {
+        return $this->belongsTo(SettingCategory::class, 'setting_category_id');
+    }
+
     /**
      * Set a setting value by key.
      */
@@ -70,7 +77,7 @@ class Setting extends Model
             [
                 'value' => $value,
                 'type' => $type,
-                'group' => $group,
+                'setting_category_id' => 1,
                 'description' => $description,
             ]
         );

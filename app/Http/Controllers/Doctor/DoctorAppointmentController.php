@@ -2,16 +2,26 @@
 
 namespace App\Http\Controllers\Doctor;
 
-use App\Http\Controllers\Controller;
-use App\Models\Appointment;
-use App\Services\Doctor\DoctorAppointmentServices;
 use Carbon\Carbon;
+use App\Models\Appointment;
 use Illuminate\Http\Request;
+use App\Events\NotifiyUserEvent;
+use App\Enums\WhatsappTemplating;
+use App\Services\UltraMsgService;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use App\Interfaces\MessageSenderInterface;
 use Illuminate\Validation\ValidationException;
+use App\Services\Doctor\DoctorAppointmentServices;
 
 class DoctorAppointmentController extends Controller
 {
+    // protected MessageSenderInterface $messenger;
+    // public function __construct()
+    // {
+    //     // Directly assign the concrete service to the interface variable
+    //     $this->messenger = new UltraMsgService();
+    // }
     public function index()
     {
         return view('doctor.appointments');
@@ -97,6 +107,48 @@ class DoctorAppointmentController extends Controller
             // Mark appointment as completed
             $appointment->status = 'completed';
             $appointment->save();
+
+            // Send WhatsApp cancellation notification via NotifyUserEvent
+            $patient = $appointment->patient;
+            $doctor = $appointment->doctor;
+
+            if ($patient->phone) {
+                $appointmentDate = Carbon::parse($appointment->appointment_date)->format('F jS');
+                $appointmentTime = Carbon::parse($appointment->appointment_time)->format('g:i A');
+
+                $doctorName = 'Dr. ' . trim($doctor->first_name . ' ' . $doctor->last_name);
+                $patientName = trim($patient->first_name . ' ' . $patient->last_name);
+                $status = ucfirst($appointment->status);
+
+                $components = [
+                    [
+                        'type' => 'body',
+                        'parameters' => [
+                            ['key' => 'name', 'type' => 'text', 'text' => $patientName],
+                            ['key' => 'date', 'type' => 'text', 'text' => $appointmentDate],
+                            ['key' => 'time', 'type' => 'text', 'text' => $appointmentTime],
+                            ['key' => 'doctor_name', 'type' => 'text', 'text' => $doctorName],
+                        ],
+                    ],
+                ];
+
+                $params = [
+                    'phone_number' => $patient->phone,
+                    'template_name' => WhatsappTemplating::COMPLETED_APPOINTMENT->value,
+                    'components' => $components,
+                    'appointment_data' => [
+                        'appointment_id' => $appointment->id,
+                        'appointment_number' => $appointment->appointment_number,
+                        'patient_name' => $patientName,
+                        'doctor_name' => $doctorName,
+                        'appointment_date' => $appointmentDate,
+                        'appointment_time' => $appointmentTime,
+                        'appointment_status' => $status,
+                    ],
+                ];
+
+                event(new NotifiyUserEvent($params));
+            }
 
             return response()->json([
                 'status' => 200,
@@ -520,6 +572,323 @@ class DoctorAppointmentController extends Controller
                 'msg' => 'Something went wrong.',
                 'error' => $e->getMessage(),
             ], 400);
+        }
+    }
+
+    public function reschedule(Request $request, $id, DoctorAppointmentServices $svc)
+    {
+        try {
+            // Validate request
+            $request->validate([
+                'date' => 'required|date|after_or_equal:today',
+                'time' => 'required|string',
+                'note' => 'nullable|string|max:100',
+            ]);
+
+            $doctorId = Auth::id();
+
+            // Fetch appointment (doctor-safe)
+            $appointment = Appointment::where('id', $id)
+                ->where('doctor_id', $doctorId)
+                ->first();
+
+            if (! $appointment) {
+                return response()->json([
+                    'status' => 404,
+                    'msg' => 'Appointment not found or unauthorized',
+                ], 404);
+            }
+
+            // Block reschedule for invalid statuses
+            $blockedStatuses = ['completed', 'cancelled', 'in_progress', 'checked_in'];
+
+            if (in_array($appointment->status, $blockedStatuses)) {
+                return response()->json([
+                    'status' => 400,
+                    'msg' => 'This appointment cannot be rescheduled in its current status.',
+                ], 400);
+            }
+
+            $date = $request->date;
+            $timeStr = $request->time;
+            $note = $request->note ?? null;
+
+            // Verify requested time exists in available slots
+            $available = $svc->getAvailableSlots($doctorId, $date);
+
+            $slots = [];
+            if (is_array($available)) {
+                if (isset($available['slots']) && is_array($available['slots'])) {
+                    $slots = $available['slots'];
+                } elseif (isset($available['data']) && is_array($available['data'])) {
+                    $slots = $available['data'];
+                } else {
+                    $slots = $available;
+                }
+            }
+
+            if (! in_array($timeStr, $slots)) {
+                return response()->json([
+                    'status' => 400,
+                    'msg' => 'Selected time is not available',
+                ], 400);
+            }
+
+            // Normalize time to H:i:s
+            try {
+                $time24 = date('H:i:s', strtotime($timeStr));
+            } catch (\Exception $e) {
+                $time24 = $timeStr;
+            }
+
+            // Update appointment
+            $appointment->appointment_date = $date;
+            $appointment->appointment_time = $time24;
+
+            // Force confirmed after reschedule
+            $appointment->status = 'confirmed';
+
+            // Clear cancellation data
+            $appointment->cancelled_at = null;
+            $appointment->cancellation_reason = null;
+
+            // Save optional note
+            if (! empty($note)) {
+                $appointment->notes = $note;
+            }
+
+            $appointment->save(); // triggers history / listeners
+
+            // Send WhatsApp reschedule notification
+            $patient = $appointment->patient;
+            $doctor = $appointment->doctor;
+
+            // Send WhatsApp cancellation notification via NotifyUserEvent
+            $patient = $appointment->patient;
+            $doctor = $appointment->doctor;
+
+            if ($patient->phone) {
+                $appointmentDate = Carbon::parse($appointment->appointment_date)->format('F jS');
+                $appointmentTime = Carbon::parse($appointment->appointment_time)->format('g:i A');
+
+                $doctorName = 'Dr. '.trim($doctor->first_name.' '.$doctor->last_name);
+                $patientName = trim($patient->first_name.' '.$patient->last_name);
+                $status = ucfirst($appointment->status);
+
+                $components = [
+                    [
+                        'type' => 'body',
+                        'parameters' => [
+                            ['key' => 'name', 'type' => 'text', 'text' => $patientName],
+                            ['key' => 'date', 'type' => 'text', 'text' => $appointmentDate],
+                            ['key' => 'time', 'type' => 'text', 'text' => $appointmentTime],
+                            ['key' => 'doctor_name', 'type' => 'text', 'text' => $doctorName],
+                        ],
+                    ],
+                ];
+
+                $params = [
+                    'phone_number' => $patient->phone,
+                    'template_name' => WhatsappTemplating::RESCHEDULE_APPOINTMENT->value,
+                    'components' => $components,
+                    'appointment_data' => [
+                        'appointment_id' => $appointment->id,
+                        'appointment_number' => $appointment->appointment_number,
+                        'patient_name' => $patientName,
+                        'doctor_name' => $doctorName,
+                        'appointment_date' => $appointmentDate,
+                        'appointment_time' => $appointmentTime,
+                        'appointment_status' => $status,
+                    ],
+                ];
+
+                event(new NotifiyUserEvent($params));
+            }
+            // Log all appointment data as a single variable
+            $logData = [
+                'appointment' => [
+                    'appointment_id' => $appointment->id,
+                    'appointment_number' => $appointment->appointment_number,
+                    'patient_name' => $patientName,
+                    'doctor_name' => $doctorName,
+                    'appointment_date' => $appointmentDate,
+                    'appointment_time' => $appointmentTime,
+                    'appointment_status' => $status,
+                ],
+            ];
+
+            \Log::info('Appointment rescheduled successfully', $logData);
+
+            return response()->json([
+                'status' => 200,
+                'msg' => 'Appointment rescheduled successfully',
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to reschedule appointment', [
+                'appointment_id' => $id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'status' => 400,
+                'msg' => 'Failed to reschedule appointment',
+                'trace' => config('app.debug') ? $e->getTrace() : null,
+            ], 400);
+        }
+    }
+
+    public function cancel(Request $request, $id)
+    {
+        $appointment = Appointment::findOrFail($id);
+
+        // Safety check: Ensure the appointment isn't already completed or cancelled
+        if (in_array($appointment->status, ['completed', 'cancelled'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Appointment cannot be cancelled',
+            ], 400);
+        }
+
+        // Validate cancellation reason. Laravel automatically handles the validation failure.
+        $request->validate([
+            'cancellation_reason' => 'required|string|max:255',
+        ]);
+
+        // If validation passes, get the cancellation reason
+        $cancellationReason = $request->input('cancellation_reason');
+
+        // Update the appointment status and cancellation reason
+        $appointment->update([
+            'status' => 'cancelled',
+            'cancellation_reason' => $cancellationReason,
+            'cancelled_at' => now(),
+        ]);
+
+        // Send WhatsApp cancellation notification via NotifyUserEvent
+        $patient = $appointment->patient;
+        $doctor = $appointment->doctor;
+
+        if ($patient->phone) {
+            $appointmentDate = Carbon::parse($appointment->appointment_date)->format('F jS');
+            $appointmentTime = Carbon::parse($appointment->appointment_time)->format('g:i A');
+
+            $doctorName = 'Dr. '.trim($doctor->first_name.' '.$doctor->last_name);
+            $patientName = trim($patient->first_name.' '.$patient->last_name);
+            $status = ucfirst($appointment->status);
+
+            $components = [
+                [
+                    'type' => 'body',
+                    'parameters' => [
+                        ['key' => 'name', 'type' => 'text', 'text' => $patientName],
+                        ['key' => 'doctor_name', 'type' => 'text', 'text' => $doctorName],
+                        ['key' => 'date', 'type' => 'text', 'text' => $appointmentDate],
+                        ['key' => 'time', 'type' => 'text', 'text' => $appointmentTime],
+                        ['key' => 'cancellation_reason', 'type' => 'text', 'text' => $cancellationReason],
+                    ],
+                ],
+            ];
+
+            $params = [
+                'phone_number' => $patient->phone,
+                'template_name' => WhatsappTemplating::CANCEL_APPOINTMENT->value,
+                'components' => $components,
+                'appointment_data' => [
+                    'appointment_id' => $appointment->id,
+                    'appointment_number' => $appointment->appointment_number,
+                    'patient_name' => $patientName,
+                    'doctor_name' => $doctorName,
+                    'appointment_date' => $appointmentDate,
+                    'appointment_time' => $appointmentTime,
+                    'appointment_status' => $status,
+                ],
+            ];
+
+            event(new NotifiyUserEvent($params));
+        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Appointment cancelled successfully',
+        ], 200);
+    }
+
+    /**
+     * Update appointment status with validation
+     */
+    public function updateStatus(Request $request, $id)
+    {
+        try {
+            $doctorId = Auth::id();
+
+            // Fetch appointment belonging to this doctor
+            $appointment = Appointment::where('id', $id)
+                ->where('doctor_id', $doctorId)
+                ->first();
+
+            if (! $appointment) {
+                return response()->json([
+                    'status' => 404,
+                    'msg' => 'Appointment not found or unauthorized',
+                ], 404);
+            }
+
+            // Check if appointment is already completed or cancelled
+            if (in_array($appointment->status, ['completed', 'cancelled'])) {
+                return response()->json([
+                    'status' => 400,
+                    'msg' => 'Cannot change status of completed or cancelled appointments',
+                ], 400);
+            }
+
+            $validated = $request->validate([
+                'status' => 'required|in:confirmed,checked_in,in_progress,completed',
+            ]);
+
+            $newStatus = $validated['status'];
+            $currentStatus = $appointment->status;
+
+            // Define allowed status transitions
+            $allowedTransitions = [
+                'pending' => ['confirmed'],
+                'confirmed' => ['checked_in', 'in_progress'],
+                'checked_in' => ['in_progress'],
+                'in_progress' => ['completed'],
+            ];
+
+            // Validate status transition
+            if (! isset($allowedTransitions[$currentStatus]) ||
+                ! in_array($newStatus, $allowedTransitions[$currentStatus])) {
+                return response()->json([
+                    'status' => 400,
+                    'msg' => "Cannot change status from {$currentStatus} to {$newStatus}. Please follow the proper workflow.",
+                ], 400);
+            }
+
+            // Update the status
+            $appointment->status = $newStatus;
+            $appointment->save();
+
+            return response()->json([
+                'status' => 200,
+                'msg' => 'Status updated successfully',
+                'data' => [
+                    'status' => $appointment->status,
+                ],
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => 422,
+                'msg' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Update appointment status error: '.$e->getMessage());
+
+            return response()->json([
+                'status' => 500,
+                'msg' => 'An error occurred while updating status',
+            ], 500);
         }
     }
 }

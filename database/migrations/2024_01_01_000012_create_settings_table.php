@@ -16,9 +16,16 @@ return new class extends Migration
             $table->string('key', 100)->unique();
             $table->text('value')->nullable();
             $table->enum('type', ['string', 'integer', 'boolean', 'json'])->default('string');
-            $table->string('group', 50)->default('general')->index();
+            $table->unsignedBigInteger('setting_category_id')->default(1)->index();
+            $table->tinyInteger('order')->default(0);
+            $table->boolean('status')->default(1);
             $table->text('description')->nullable();
             $table->timestamps();
+
+            $table->foreign('setting_category_id')
+                ->references('id')
+                ->on('setting_categories')
+                ->onDelete('cascade');
         });
     }
 

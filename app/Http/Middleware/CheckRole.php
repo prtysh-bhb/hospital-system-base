@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class CheckRole
@@ -36,6 +37,7 @@ class CheckRole
         //             'message' => 'You can not login'
         //         ], 403);
         //     }
+        //     Auth::guard('web')->logout();
         //     return redirect()->route('login')->with('error', 'You can not login');
         // }
 

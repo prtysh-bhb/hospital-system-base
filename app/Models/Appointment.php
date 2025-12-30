@@ -2,17 +2,21 @@
 
 namespace App\Models;
 
+use App\Observers\AppointmentObserver;
 use App\Traits\LogsActivity;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+#[ObservedBy([AppointmentObserver::class])]
 class Appointment extends Model
 {
     use HasFactory, LogsActivity, SoftDeletes;
-
+    protected $table = 'appointments';
     protected $fillable = [
         'appointment_number',
         'patient_id',
@@ -26,6 +30,7 @@ class Appointment extends Model
         'symptoms',
         'notes',
         'cancellation_reason',
+        'cancelled_at',
         'booked_by',
         'booked_via',
         'reminder_sent',
@@ -41,12 +46,28 @@ class Appointment extends Model
 
     public function getFormattedDateAttribute()
     {
-        return $this->appointment_date->format('d-m-Y');
+        if (empty($this->appointment_date)) {
+            return null;
+        }
+
+        try {
+            return $this->appointment_date->format('d-m-Y');
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     public function getFormattedTimeAttribute()
     {
-        return \Carbon\Carbon::parse($this->appointment_time)->format('h:i A');
+        if (empty($this->appointment_time)) {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($this->appointment_time)->format('h:i A');
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     /**

@@ -18,7 +18,8 @@
     <div id="doctorViewModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden">
             <!-- Modal Header -->
-            <div class="bg-gradient-to-r from-sky-500 to-sky-600 px-6 py-4 flex justify-between items-center">
+            <div id="modalHeader"
+                class="bg-gradient-to-r from-sky-500 to-sky-600 px-6 py-4 flex justify-between items-center">
                 <h2 class="text-xl font-bold text-white">Doctor Details</h2>
                 <button onclick="closeDoctorViewModal()" class="text-white hover:text-gray-200 transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -90,6 +91,10 @@
                                 <div class="flex items-start">
                                     <span class="text-gray-500 text-sm w-28 flex-shrink-0">Email:</span>
                                     <span id="doctorEmail" class="text-gray-800 text-sm font-medium"></span>
+                                </div>
+                                <div class="flex items-start">
+                                    <span class="text-gray-500 text-sm w-28 flex-shrink-0">Username:</span>
+                                    <span id="doctorUsername" class="text-gray-800 text-sm font-medium"></span>
                                 </div>
                                 <div class="flex items-start">
                                     <span class="text-gray-500 text-sm w-28 flex-shrink-0">Phone:</span>
@@ -181,7 +186,7 @@
                     Close
                 </button>
                 <a id="editDoctorBtn" href="#"
-                    class="px-4 py-2 text-sm font-medium text-white bg-sky-600 rounded-lg hover:bg-sky-700 transition-colors">
+                    class="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors bg-sky-600 hover:bg-sky-700">
                     Edit Doctor
                 </a>
             </div>
@@ -211,6 +216,7 @@
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
                     <option value="suspended">Suspended</option>
+                    {{-- <option value="on_leave">On Leave</option> --}}
                 </select>
             </div>
         </div>
@@ -347,22 +353,100 @@
 
         });
 
+        // Color schemes matching doctor-cards.blade.php
+        const colorSchemes = [{
+                gradient: 'from-slate-700 to-slate-800',
+                avatar: '475569',
+                text: 'text-slate-700',
+                accent: 'bg-slate-700',
+                accentLight: 'bg-slate-50',
+                border: 'border-slate-200',
+                hover: 'hover:bg-slate-800',
+                scheduleCard: 'bg-slate-50 border-slate-100 text-slate-700'
+            },
+            {
+                gradient: 'from-blue-900 to-blue-950',
+                avatar: '1e3a8a',
+                text: 'text-blue-900',
+                accent: 'bg-blue-900',
+                accentLight: 'bg-blue-50',
+                border: 'border-blue-200',
+                hover: 'hover:bg-blue-950',
+                scheduleCard: 'bg-blue-50 border-blue-100 text-blue-900'
+            },
+            {
+                gradient: 'from-teal-800 to-teal-900',
+                avatar: '115e59',
+                text: 'text-teal-800',
+                accent: 'bg-teal-800',
+                accentLight: 'bg-teal-50',
+                border: 'border-teal-200',
+                hover: 'hover:bg-teal-900',
+                scheduleCard: 'bg-teal-50 border-teal-100 text-teal-800'
+            },
+            {
+                gradient: 'from-gray-700 to-gray-800',
+                avatar: '4b5563',
+                text: 'text-gray-700',
+                accent: 'bg-gray-700',
+                accentLight: 'bg-gray-50',
+                border: 'border-gray-200',
+                hover: 'hover:bg-gray-800',
+                scheduleCard: 'bg-gray-50 border-gray-100 text-gray-700'
+            },
+            {
+                gradient: 'from-indigo-900 to-indigo-950',
+                avatar: '312e81',
+                text: 'text-indigo-900',
+                accent: 'bg-indigo-900',
+                accentLight: 'bg-indigo-50',
+                border: 'border-indigo-200',
+                hover: 'hover:bg-indigo-950',
+                scheduleCard: 'bg-indigo-50 border-indigo-100 text-indigo-900'
+            }
+        ];
+
+        let currentModalColor = null;
+
         function attachDeleteHandlers() {
             // Attach view details handlers
             document.querySelectorAll('.view-doctor-btn').forEach(btn => {
                 btn.addEventListener('click', function(e) {
                     e.preventDefault();
                     const doctorId = this.dataset.doctorId;
-                    viewDoctorDetails(doctorId);
+                    // Get color data from button
+                    const colorData = {
+                        gradient: this.dataset.colorGradient,
+                        avatar: this.dataset.colorAvatar,
+                        text: this.dataset.colorText,
+                        accent: this.dataset.colorAccent,
+                        accentLight: this.dataset.colorAccentLight,
+                        border: this.dataset.colorBorder,
+                        hover: this.dataset.colorHover
+                    };
+                    viewDoctorDetails(doctorId, colorData);
                 });
             });
         }
 
         // View Doctor Details Modal Functions
-        function viewDoctorDetails(doctorId) {
+        function viewDoctorDetails(doctorId, colorData) {
             const modal = document.getElementById('doctorViewModal');
             const loading = document.getElementById('doctorViewLoading');
             const content = document.getElementById('doctorViewContent');
+            const modalHeader = document.getElementById('modalHeader');
+
+            // Store current color for use in populateDoctorModal
+            currentModalColor = colorData;
+
+            // Apply color to modal header
+            if (colorData && colorData.gradient) {
+                modalHeader.className =
+                `bg-gradient-to-r ${colorData.gradient} px-6 py-4 flex justify-between items-center`;
+            } else {
+                modalHeader.className =
+                    'bg-gradient-to-r from-sky-500 to-sky-600 px-6 py-4 flex justify-between items-center';
+            }
 
             // Show modal with loading state
             modal.classList.remove('hidden');
@@ -400,20 +484,37 @@
             const schedules = data.schedules;
             const stats = data.statistics;
 
+            // Get avatar background color from current modal color or default
+            const avatarBg = currentModalColor && currentModalColor.avatar ? currentModalColor.avatar : '0ea5e9';
+
             // Profile Image with fallback
             const imgEl = document.getElementById('doctorImage');
             imgEl.dataset.name = doctor.full_name; // Set data-name for onerror fallback
+
+            // Update onerror to use current color
+            imgEl.onerror = function() {
+                this.onerror = null;
+                this.src =
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(this.dataset.name || 'Doctor')}&background=${avatarBg}&color=fff&size=128`;
+            };
 
             if (doctor.profile_image) {
                 imgEl.src = doctor.profile_image;
             } else {
                 imgEl.src =
-                    `https://ui-avatars.com/api/?name=${encodeURIComponent(doctor.full_name)}&background=0ea5e9&color=fff&size=128`;
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(doctor.full_name)}&background=${avatarBg}&color=fff&size=128`;
             }
 
             // Basic Info
             document.getElementById('doctorName').textContent = doctor.full_name;
-            document.getElementById('doctorSpecialty').textContent = doctor.specialty;
+            const specialtyEl = document.getElementById('doctorSpecialty');
+            specialtyEl.textContent = doctor.specialty;
+            // Apply color to specialty text
+            if (currentModalColor && currentModalColor.text) {
+                specialtyEl.className = `${currentModalColor.text} font-semibold mt-1`;
+            } else {
+                specialtyEl.className = 'text-sky-600 font-semibold mt-1';
+            }
             document.getElementById('doctorQualification').textContent = doctor.qualification;
 
             // Status Badge
@@ -436,13 +537,33 @@
                 availEl.className = 'px-3 py-1 text-xs font-medium rounded-full bg-red-100 text-red-700';
             }
 
-            // Statistics
-            document.getElementById('totalAppointments').textContent = stats.total_appointments;
+            // Statistics - Apply dynamic color to total appointments
+            const totalAppEl = document.getElementById('totalAppointments');
+            totalAppEl.textContent = stats.total_appointments;
+
+            // Apply color to total appointments stat
+            let statTextColor = 'text-sky-600';
+            if (currentModalColor) {
+                if (currentModalColor.gradient.includes('slate')) {
+                    statTextColor = 'text-slate-700';
+                } else if (currentModalColor.gradient.includes('blue')) {
+                    statTextColor = 'text-blue-900';
+                } else if (currentModalColor.gradient.includes('teal')) {
+                    statTextColor = 'text-teal-800';
+                } else if (currentModalColor.gradient.includes('gray')) {
+                    statTextColor = 'text-gray-700';
+                } else if (currentModalColor.gradient.includes('indigo')) {
+                    statTextColor = 'text-indigo-900';
+                }
+            }
+            totalAppEl.className = `text-2xl font-bold ${statTextColor}`;
+
             document.getElementById('completedAppointments').textContent = stats.completed_appointments;
             document.getElementById('upcomingAppointments').textContent = stats.upcoming_appointments;
 
             // Personal Info
             document.getElementById('doctorEmail').textContent = doctor.email;
+            document.getElementById('doctorUsername').textContent = doctor.username;
             document.getElementById('doctorPhone').textContent = doctor.phone || 'N/A';
             document.getElementById('doctorGender').textContent = doctor.gender;
             document.getElementById('doctorDob').textContent = doctor.date_of_birth;
@@ -462,13 +583,42 @@
             const noSchedules = document.getElementById('noSchedules');
             schedulesContainer.innerHTML = '';
 
+            // Determine schedule card colors based on current modal color
+            let scheduleCardBg = 'bg-sky-50';
+            let scheduleCardBorder = 'border-sky-100';
+            let scheduleCardText = 'text-sky-700';
+
+            if (currentModalColor) {
+                if (currentModalColor.gradient.includes('slate')) {
+                    scheduleCardBg = 'bg-slate-50';
+                    scheduleCardBorder = 'border-slate-100';
+                    scheduleCardText = 'text-slate-700';
+                } else if (currentModalColor.gradient.includes('blue')) {
+                    scheduleCardBg = 'bg-blue-50';
+                    scheduleCardBorder = 'border-blue-100';
+                    scheduleCardText = 'text-blue-900';
+                } else if (currentModalColor.gradient.includes('teal')) {
+                    scheduleCardBg = 'bg-teal-50';
+                    scheduleCardBorder = 'border-teal-100';
+                    scheduleCardText = 'text-teal-800';
+                } else if (currentModalColor.gradient.includes('gray')) {
+                    scheduleCardBg = 'bg-gray-50';
+                    scheduleCardBorder = 'border-gray-100';
+                    scheduleCardText = 'text-gray-700';
+                } else if (currentModalColor.gradient.includes('indigo')) {
+                    scheduleCardBg = 'bg-indigo-50';
+                    scheduleCardBorder = 'border-indigo-100';
+                    scheduleCardText = 'text-indigo-900';
+                }
+            }
+
             if (schedules && schedules.length > 0) {
                 noSchedules.classList.add('hidden');
                 schedules.forEach(schedule => {
                     const scheduleCard = document.createElement('div');
-                    scheduleCard.className = 'bg-sky-50 rounded-lg p-3 border border-sky-100';
+                    scheduleCard.className = `${scheduleCardBg} rounded-lg p-3 border ${scheduleCardBorder}`;
                     scheduleCard.innerHTML = `
-                        <div class="font-semibold text-sky-700 text-sm">${schedule.day}</div>
+                        <div class="font-semibold ${scheduleCardText} text-sm">${schedule.day}</div>
                         <div class="text-gray-600 text-xs mt-1">${schedule.start_time} - ${schedule.end_time}</div>
                         <div class="text-gray-500 text-xs">${schedule.slot_duration} min slots</div>
                     `;
@@ -478,8 +628,17 @@
                 noSchedules.classList.remove('hidden');
             }
 
-            // Edit Button
-            document.getElementById('editDoctorBtn').href = `/admin/doctors/${doctor.id}/edit`;
+            // Edit Button - apply color
+            const editBtn = document.getElementById('editDoctorBtn');
+            editBtn.href = `/admin/doctors/${doctor.id}/edit`;
+
+            if (currentModalColor && currentModalColor.accent && currentModalColor.hover) {
+                editBtn.className =
+                    `px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors ${currentModalColor.accent} ${currentModalColor.hover}`;
+            } else {
+                editBtn.className =
+                    'px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors bg-sky-600 hover:bg-sky-700';
+            }
         }
 
         function closeDoctorViewModal() {

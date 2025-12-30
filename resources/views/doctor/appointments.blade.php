@@ -77,6 +77,77 @@
     <!-- Pagination (dynamic) -->
     <div id="appointmentsPagination" class="mt-4 sm:mt-6"></div>
 
+    <!-- Reschedule Modal -->
+    <div id="rescheduleModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl w-full max-w-md p-6">
+            <h3 class="text-lg font-semibold mb-4">Reschedule Appointment</h3>
+
+            <input type="hidden" id="rescheduleAppointmentId">
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">Select Date</label>
+                <input type="date" id="rescheduleDate" class="w-full border rounded-lg px-3 py-2">
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">Select Time</label>
+                <select id="rescheduleTime" class="w-full border rounded-lg px-3 py-2">
+                    <option value="">Loading available times...</option>
+                </select>
+                <p id="slotsLoading" class="text-sm text-gray-500 mt-2 hidden">Loading available times…</p>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">Note (Optional)</label>
+                <textarea id="rescheduleNote" class="w-full border rounded-lg px-3 py-2" name="note"
+                    placeholder="Add a reason or note for rescheduling" rows="3" maxlength="100"></textarea>
+                <div class="flex justify-between mt-1">
+                    <p id="rescheduleNoteError" class="text-red-500 text-xs hidden">Note cannot exceed 100 characters</p>
+                    <p id="rescheduleNoteCount" class="text-xs text-gray-500">0/100</p>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2">
+                <button id="closeRescheduleModal" class="px-4 py-2 bg-gray-200 rounded-lg">
+                    Cancel
+                </button>
+                <button id="submitReschedule" class="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700">
+                    Reschedule
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancel Modal -->
+    <div id="cancelModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-full max-w-sm flex flex-col">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                Cancel Appointment?
+            </h3>
+            <p class="text-sm text-gray-600 mb-6">
+                Are you sure you want to cancel this appointment?
+            </p>
+
+            <!-- Cancellation Reason Textarea -->
+            <textarea id="cancellationReason" class="w-full p-2 border border-gray-300 rounded-lg mb-2"
+                placeholder="Please provide a reason for cancellation (optional)" rows="4"></textarea>
+
+            <!-- Error message below textarea -->
+            <p id="cancellationReasonError" class="text-red-500 text-xs hidden mt-2">Please provide a reason for
+                cancellation.</p>
+
+            <!-- Footer with Cancel and Ok buttons -->
+            <div class="flex justify-end gap-3 mt-4">
+                <button id="closeCancelModal" class="px-4 py-2 border rounded-lg text-gray-600 hover:bg-gray-100">
+                    No
+                </button>
+                <button id="confirmCancel" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                    Yes, Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
     @push('scripts')
         <script>
             (function() {
@@ -117,7 +188,7 @@
                     const ampm = a.time && a.time.includes('AM') ? 'AM' : (a.time && a.time.includes('PM') ? 'PM' : '');
 
                     return `
-                    <div class="p-4 sm:p-6 hover:bg-gray-50 ${a.status === 'completed' ? 'opacity-60' : ''}">
+                    <div id="appointment-card-${a.id}" class="p-4 sm:p-6 hover:bg-gray-50 ${a.status === 'completed' ? 'opacity-60' : ''}">
                         <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                             <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-1">
                                 <div class="w-16 h-16 ${(a.status === 'completed') ? 'bg-gray-100' : 'bg-sky-100'} rounded-lg flex flex-col items-center justify-center shrink-0">
@@ -144,22 +215,309 @@
                                 </div>
                             </div>
                             <div class="flex flex-col items-start lg:items-end gap-2">
-                                <span class="px-3 py-1 ${badge[0]} ${badge[1]} text-xs sm:text-sm font-medium rounded-full">${badge[2]}</span>
+                                <span id="status-badge-${a.id}" class="px-3 py-1 ${badge[0]} ${badge[1]} text-xs sm:text-sm font-medium rounded-full">${badge[2]}</span>
                                 <div class="flex flex-col sm:flex-row gap-2 w-full lg:w-auto mt-2">
                                     <a href="${a.details_url || '#'}" class="px-3 sm:px-4 py-2 bg-sky-600 text-white text-xs sm:text-sm rounded-lg hover:bg-sky-700 text-center">View Details</a>
-                                    ${a.status === 'completed'
-                                        ? ''
-                                        : (['pending','confirmed','checked_in','in_progress'].includes(a.status)
-                                            ? `<button data-id="${a.id}" class="btn-completed px-3 sm:px-4 py-2 bg-green-600 text-white text-xs sm:text-sm rounded-lg hover:bg-green-700">Mark Completed</button>`
-                                            : `<button data-id="${a.id}" class="btn-reschedule px-3 sm:px-4 py-2 bg-yellow-600 text-white text-xs sm:text-sm rounded-lg hover:bg-yellow-700">Reschedule</button>`
-                                        )
-                                    }
+
+                                    ${(a.status !== 'completed' && a.status !== 'cancelled' && a.status !== 'in_progress' && a.status !== 'checked_in') ? `<button data-id="${a.id}" data-date="${a.date || ''}" data-time="${a.time || ''}" class="btn-reschedule px-3 sm:px-4 py-2 bg-white border border-sky-600 text-sky-600 text-xs sm:text-sm rounded-lg hover:bg-sky-50">Reschedule</button>` : ''}
+
+                                    ${(a.status !== 'completed' && a.status !== 'cancelled' && a.status !== 'in_progress' && a.status !== 'checked_in') ? `<button data-id="${a.id}" class="btn-cancel px-3 sm:px-4 py-2 bg-red-600 text-white text-xs sm:text-sm rounded-lg hover:bg-red-700">Cancel</button>` : ''}
                                 </div>
                             </div>
                         </div>
                     </div>
                     `;
                 }
+
+                $container.on('click', '.btn-reschedule', function() {
+                    const id = $(this).data('id');
+                    const apptDate = $(this).data('date') || '';
+                    const apptTime = $(this).data('time') || '';
+
+                    // set appointment id
+                    $('#rescheduleAppointmentId').val(id);
+
+                    // compute default date: use appointment date if today or future, otherwise today
+                    const todayStr = new Date().toISOString().slice(0, 10);
+                    let defaultDate = apptDate && apptDate >= todayStr ? apptDate : todayStr;
+
+                    // set min date to today (prevent selecting past dates)
+                    $('#rescheduleDate').attr('min', todayStr).val(defaultDate);
+
+                    // clear time select while we fetch
+                    $('#rescheduleTime').empty().append('<option value="">Loading available times...</option>');
+                    $('#slotsLoading').removeClass('hidden');
+
+                    // clear note field
+                    $('#rescheduleNote').val('');
+                    $('#rescheduleNoteCount').text('0/100');
+                    $('#rescheduleNoteError').addClass('hidden');
+
+                    // show modal
+                    $('#rescheduleModal').removeClass('hidden').addClass('flex');
+
+                    // fetch available slots for defaultDate and select appointment time if available
+                    fetchAvailableSlots(defaultDate, apptTime);
+                });
+
+                // When date changes in modal, fetch slots for that date
+                $('#rescheduleDate').on('change', function() {
+                    const date = $(this).val();
+                    if (!date) return;
+                    $('#rescheduleTime').empty().append('<option value="">Loading available times...</option>');
+                    $('#slotsLoading').removeClass('hidden');
+                    fetchAvailableSlots(date, null);
+                });
+
+                // Parse time like '10:30 AM' into Date object for given YYYY-MM-DD
+                function parseTimeToDate(dateStr, timeStr) {
+                    if (!timeStr || !dateStr) return null;
+                    const m = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+                    if (!m) return null;
+                    let hh = parseInt(m[1], 10);
+                    const mm = parseInt(m[2], 10);
+                    const ap = m[3];
+                    if (ap) {
+                        if (/pm/i.test(ap) && hh !== 12) hh += 12;
+                        if (/am/i.test(ap) && hh === 12) hh = 0;
+                    }
+                    const parts = dateStr.split('-');
+                    if (parts.length !== 3) return null;
+                    const year = parseInt(parts[0], 10);
+                    const month = parseInt(parts[1], 10) - 1;
+                    const day = parseInt(parts[2], 10);
+                    return new Date(year, month, day, hh, mm, 0, 0);
+                }
+
+                // Fetch available slots from server and populate select; filter out past times for today
+                function fetchAvailableSlots(date, selectedTime) {
+                    const $select = $('#rescheduleTime');
+                    const now = new Date();
+
+                    $.get('/doctor/appointments/available-slots', {
+                            date: date
+                        })
+                        .done(function(res) {
+                            let slots = [];
+                            if (res && res.status === 200 && res.data) {
+                                if (Array.isArray(res.data.slots)) slots = res.data.slots;
+                                else if (Array.isArray(res.data)) slots = res.data;
+                                else if (Array.isArray(res.data.available_slots)) slots = res.data.available_slots;
+                            } else if (Array.isArray(res)) {
+                                slots = res;
+                            } else if (res && Array.isArray(res.slots)) {
+                                slots = res.slots;
+                            }
+
+                            // filter out past times if date is today
+                            const isToday = (date === now.toISOString().slice(0, 10));
+                            const filtered = slots.filter(function(s) {
+                                const dt = parseTimeToDate(date, s);
+                                if (!dt) return false;
+                                if (isToday) return dt > now;
+                                return true;
+                            });
+
+                            $select.empty();
+                            if (!filtered.length) {
+                                $select.append('<option value="">No available slots</option>');
+                            } else {
+                                filtered.forEach(function(s) {
+                                    const sel = (selectedTime && s === selectedTime) ? ' selected' : '';
+                                    $select.append('<option value="' + s + '"' + sel + '>' + s + '</option>');
+                                });
+                            }
+                        })
+                        .fail(function() {
+                            $select.empty().append('<option value="">Unable to load slots</option>');
+                        })
+                        .always(function() {
+                            $('#slotsLoading').addClass('hidden');
+                        });
+                }
+
+                // Character counter for reschedule note
+                $('#rescheduleNote').on('input', function() {
+                    const len = $(this).val().length;
+                    $('#rescheduleNoteCount').text(len + '/100');
+                    if (len > 100) {
+                        $('#rescheduleNoteError').removeClass('hidden');
+                    } else {
+                        $('#rescheduleNoteError').addClass('hidden');
+                    }
+                });
+
+                $('#closeRescheduleModal').on('click', function() {
+                    $('#rescheduleModal')
+                        .addClass('hidden')
+                        .removeClass('flex');
+                });
+
+                $('#submitReschedule').on('click', function() {
+                    const id = $('#rescheduleAppointmentId').val();
+                    const date = $('#rescheduleDate').val();
+                    const time = $('#rescheduleTime').val();
+                    const note = $('#rescheduleNote').val().trim();
+
+                    if (!date || !time) {
+                        toastr.error('Please select date and time', '', {
+                            closeButton: false
+                        });
+                        return;
+                    }
+
+                    if (note.length > 100) {
+                        toastr.error('Note cannot exceed 100 characters', '', {
+                            closeButton: false
+                        });
+                        return;
+                    }
+
+                    $.ajax({
+                        url: `/doctor/appointments/${id}/reschedule`,
+                        type: 'POST',
+                        data: {
+                            date: date,
+                            time: time,
+                            note: note
+                        },
+                        success: function(res) {
+                            if (res.status === 200) {
+                                toastr.success(res.msg, '', {
+                                    closeButton: false
+                                });
+
+                                $('#rescheduleModal')
+                                    .addClass('hidden')
+                                    .removeClass('flex');
+
+                                loadAppointments();
+                            } else {
+                                toastr.error(res.msg, '', {
+                                    closeButton: false
+                                });
+                            }
+
+                            if (res.status === 400) {
+                                toastr.success(res.msg, '', {
+                                    closeButton: false
+                                });
+                            }
+                        },
+                        error: function(xhr) {
+                            if (xhr.responseJSON) {
+                                const res = xhr.responseJSON;
+
+                                if (res.msg) {
+                                    toastr.error(res.msg, '', {
+                                        closeButton: false
+                                    });
+                                } else if (res.errors) {
+                                    Object.values(res.errors).forEach(err => {
+                                        toastr.error(err[0], '', {
+                                            closeButton: false
+                                        });
+                                    });
+                                } else {
+                                    toastr.error('Unexpected error occurred', '', {
+                                        closeButton: false
+                                    });
+                                }
+                            } else {
+                                toastr.error('Server error', '', {
+                                    closeButton: false
+                                });
+                            }
+                        }
+                    });
+                });
+
+                let cancelAppointmentId = null;
+
+                $(document).on('click', '.btn-cancel', function() {
+                    cancelAppointmentId = $(this).data('id');
+                    $('#cancelModal').removeClass('hidden').addClass('flex');
+                    $('#cancellationReason').removeClass('border-red-500');
+                    $('#cancellationReasonError').addClass('hidden');
+                });
+
+                $('#closeCancelModal').on('click', function() {
+                    cancelAppointmentId = null;
+                    $('#cancelModal').addClass('hidden').removeClass('flex');
+                });
+
+                $('#confirmCancel').on('click', function() {
+                    const cancellationReason = $('#cancellationReason').val().trim();
+
+                    if (!cancellationReason) {
+                        $('#cancellationReason').addClass('border-red-500');
+                        $('#cancellationReasonError').removeClass('hidden').text(
+                            'Please provide a reason for cancellation.');
+                        return;
+                    }
+
+                    if (!cancelAppointmentId) return;
+
+                    $.ajax({
+                        url: `/doctor/appointments/${cancelAppointmentId}/cancel`,
+                        type: 'POST',
+                        data: {
+                            cancellation_reason: cancellationReason
+                        },
+                        success: function(res) {
+                            const ok = (res && (res.success === true || res.status === 200 || res
+                                .status === '200'));
+
+                            if (!ok) {
+                                const msg = (res && (res.message || res.msg || res.error)) ||
+                                    'Cancel failed';
+                                toastr.error(msg, '', {
+                                    closeButton: false
+                                });
+                                return;
+                            }
+
+                            const $card = $(`#appointment-card-${cancelAppointmentId}`);
+                            $(`#status-badge-${cancelAppointmentId}`)
+                                .removeClass()
+                                .addClass(
+                                    'px-3 py-1 bg-red-100 text-red-700 text-xs font-medium rounded-full'
+                                )
+                                .text('Cancelled');
+
+                            $card.find('.btn-cancel').remove();
+                            $card.find('.btn-reschedule').remove();
+                            $card.addClass('opacity-60');
+                            $('#cancelModal').addClass('hidden').removeClass('flex');
+
+                            toastr.success(res.message || res.msg || 'Appointment cancelled', '', {
+                                closeButton: false
+                            });
+                            loadAppointments();
+                            cancelAppointmentId = null;
+                        },
+                        error: function(xhr) {
+                            if (xhr.status === 422) {
+                                const errorMessage = xhr.responseJSON.message ||
+                                    'Please provide a reason for cancellation.';
+                                $('#cancellationReason').addClass('border-red-500');
+                                $('#cancellationReasonError').removeClass('hidden').text(
+                                    errorMessage);
+                            } else {
+                                toastr.error('Server error', '', {
+                                    closeButton: false
+                                });
+                            }
+                        }
+                    });
+                });
+
+                $('#cancellationReason').on('input', function() {
+                    if ($(this).val().trim()) {
+                        $(this).removeClass('border-red-500');
+                        $('#cancellationReasonError').addClass('hidden');
+                    }
+                });
 
                 function renderPagination(meta) {
                     if (!meta) return $pagination.empty();
@@ -352,24 +710,6 @@
                             }
                             $confirmBtn.prop('disabled', false)
                                 .removeClass('opacity-50 cursor-not-allowed');
-                        }
-                    });
-                });
-
-                $container.on('click', '.btn-reschedule', function() {
-                    const id = $(this).data('id');
-                    const newDate = prompt('Enter new date (YYYY-MM-DD):');
-                    if (!newDate) return;
-                    $.post(`/doctor/appointments/${id}/reschedule`, {
-                        date: newDate
-                    }).done(function() {
-                        if (window.toastr && typeof window.toastr.success === 'function') {
-                            window.toastr.success('Appointment rescheduled');
-                        }
-                        loadAppointments();
-                    }).fail(function() {
-                        if (window.toastr && typeof window.toastr.error === 'function') {
-                            window.toastr.error('Failed to reschedule appointment.');
                         }
                     });
                 });

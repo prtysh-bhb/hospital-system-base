@@ -11,8 +11,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PatientProfile extends Model
 {
-    use HasFactory, LogsActivity, SoftDeletes;
-
+    use HasFactory, LogsActivity ,SoftDeletes;
+    protected $table = 'patient_profiles';
     protected $fillable = [
         'user_id',
         'emergency_contact_name',
@@ -23,7 +23,7 @@ class PatientProfile extends Model
         'current_medications',
         'insurance_provider',
         'insurance_number',
-        'deleted_at',
+        'delete_at',
     ];
 
     /**

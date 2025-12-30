@@ -40,20 +40,16 @@ class AuthController extends Controller
     {
         try {
             // Validate the request data
-            $credentials = $this->authService->validateLoginData($request->all());
+            $validatedData = $this->authService->validateLoginData($request->all());
 
             // Attempt to login
-            $result = $this->authService->login($credentials);
+            $result = $this->authService->login($validatedData);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Login successful!',
                 'redirect_url' => $result['redirect_url'],
-                'user' => [
-                    'name' => $result['user']->full_name,
-                    'email' => $result['user']->email,
-                    'role' => $result['user']->role,
-                ],
+                'user' => $result['user'],
             ], 200);
 
         } catch (ValidationException $e) {

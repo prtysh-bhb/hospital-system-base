@@ -4,6 +4,7 @@ namespace App\Services\Public;
 
 use App\Models\Appointment;
 use App\Models\PatientProfile;
+use App\Models\Setting;
 use App\Models\User;
 use App\Services\AppointmentSlotService;
 use Carbon\Carbon;
@@ -17,6 +18,21 @@ class BookAppointmentService
     public function __construct(AppointmentSlotService $slotService)
     {
         $this->slotService = $slotService;
+    }
+
+    /**
+     * Get form field visibility settings for patient forms
+     * Centralized method used across all appointment creation interfaces
+     */
+    public static function getFormSettings()
+    {
+        return [
+            'show_emergency_contact' => Setting::getValue('show_emergency_contact', '0') == '1',
+            'show_blood_group' => Setting::getValue('show_blood_group', '0') == '1',
+            'show_medical_history' => Setting::getValue('show_medical_history', '0') == '1',
+            'show_current_medications' => Setting::getValue('show_current_medications', '0') == '1',
+            'show_insurance_details' => Setting::getValue('show_insurance_details', '0') == '1',
+        ];
     }
 
     public function createAppointment(array $data)
@@ -44,16 +60,13 @@ class BookAppointmentService
                 ->first();
 
             if (! $user) {
-                // Generate secure random password for patient
-                $randomPassword = \Str::random(10);
-
                 // Create new user
                 $user = User::create([
                     'first_name' => $data['first_name'],
                     'last_name' => $data['last_name'],
                     'email' => $data['email'],
                     'phone' => $data['phone'],
-                    'password' => Hash::make($randomPassword),
+                    'password' => Hash::make($data['phone']), // Password is phone number
                     'date_of_birth' => $data['date_of_birth'],
                     'gender' => $data['gender'],
                     'address' => $data['address'] ?? null,
@@ -61,13 +74,17 @@ class BookAppointmentService
                     'status' => 'active',
                 ]);
 
-                // TODO: Send welcome email with temporary password to patient
-                \Log::info("Patient created with ID: {$user->id}. Temporary password should be emailed.");
-
-                // Create patient profile
+                // Create patient profile with optional fields
                 PatientProfile::create([
                     'user_id' => $user->id,
                     'allergies' => $data['allergies'] ?? null,
+                    'emergency_contact_name' => $data['emergency_contact_name'] ?? null,
+                    'emergency_contact_phone' => $data['emergency_contact_phone'] ?? null,
+                    'blood_group' => $data['blood_group'] ?? null,
+                    'medical_history' => $data['medical_history'] ?? null,
+                    'current_medications' => $data['current_medications'] ?? null,
+                    'insurance_provider' => $data['insurance_provider'] ?? null,
+                    'insurance_number' => $data['insurance_number'] ?? null,
                 ]);
             } else {
                 // Update existing user info if needed
@@ -79,10 +96,30 @@ class BookAppointmentService
                     'address' => $data['address'] ?? $user->address,
                 ]);
 
-                // Update patient profile if exists
+                // Update patient profile if exists, or create if not
                 if ($user->patientProfile) {
                     $user->patientProfile->update([
                         'allergies' => $data['allergies'] ?? $user->patientProfile->allergies,
+                        'emergency_contact_name' => $data['emergency_contact_name'] ?? $user->patientProfile->emergency_contact_name,
+                        'emergency_contact_phone' => $data['emergency_contact_phone'] ?? $user->patientProfile->emergency_contact_phone,
+                        'blood_group' => $data['blood_group'] ?? $user->patientProfile->blood_group,
+                        'medical_history' => $data['medical_history'] ?? $user->patientProfile->medical_history,
+                        'current_medications' => $data['current_medications'] ?? $user->patientProfile->current_medications,
+                        'insurance_provider' => $data['insurance_provider'] ?? $user->patientProfile->insurance_provider,
+                        'insurance_number' => $data['insurance_number'] ?? $user->patientProfile->insurance_number,
+                    ]);
+                } else {
+                    // Create patient profile if user exists but doesn't have one
+                    PatientProfile::create([
+                        'user_id' => $user->id,
+                        'allergies' => $data['allergies'] ?? null,
+                        'emergency_contact_name' => $data['emergency_contact_name'] ?? null,
+                        'emergency_contact_phone' => $data['emergency_contact_phone'] ?? null,
+                        'blood_group' => $data['blood_group'] ?? null,
+                        'medical_history' => $data['medical_history'] ?? null,
+                        'current_medications' => $data['current_medications'] ?? null,
+                        'insurance_provider' => $data['insurance_provider'] ?? null,
+                        'insurance_number' => $data['insurance_number'] ?? null,
                     ]);
                 }
             }
@@ -91,7 +128,7 @@ class BookAppointmentService
             $date = now()->format('Ymd');
             $random = random_int(0, 999999);
             $randomPadded = str_pad($random, 6, '0', STR_PAD_LEFT);
-            $appointmentNumber = 'APT-' . $date . '-' . $randomPadded;
+            $appointmentNumber = 'APT-'.$date.'-'.$randomPadded;
             // $appointmentNumber = 'APT-'.date('Y').'-'.str_pad(Appointment::count() + 1, 6, '0', STR_PAD_LEFT);
 
             // Parse appointment time (format: "09:00 AM")

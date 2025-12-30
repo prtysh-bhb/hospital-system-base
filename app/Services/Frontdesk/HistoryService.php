@@ -2,7 +2,7 @@
 
 namespace App\Services\Frontdesk;
 
-use App\Models\Appointment;
+use App\Models\AppointmentHistory;
 use Carbon\Carbon;
 
 class HistoryService
@@ -12,53 +12,49 @@ class HistoryService
      */
     public function getAppointmentsHistory($filters = [])
     {
-        $query = Appointment::with(['patient', 'doctor', 'patient.patientProfile', 'doctor.doctorProfile'])
-            ->whereIn('status', ['completed', 'cancelled', 'no_show'])
-            ->whereHas('patient')  // Only get appointments where patient exists
-            ->whereHas('doctor');  // Only get appointments where doctor exists
+        $query = AppointmentHistory::with([
+            'appointment.patient.patientProfile',
+            'appointment.doctor.doctorProfile.specialty'
+        ])->whereHas('appointment.patient')
+            ->whereHas('appointment.doctor');
 
-        // Date range filter - only apply if BOTH dates are provided
-        $hasFromDate = isset($filters['from_date']) && ! empty($filters['from_date']);
-        $hasToDate = isset($filters['to_date']) && ! empty($filters['to_date']);
-
-        if ($hasFromDate && $hasToDate) {
-            $query->where('appointment_date', '>=', $filters['from_date'])
-                ->where('appointment_date', '<=', $filters['to_date']);
+        // Date range
+        if (!empty($filters['from_date']) && !empty($filters['to_date'])) {
+            $query->whereBetween('appointment_date', [
+                $filters['from_date'],
+                $filters['to_date']
+            ]);
         }
 
-        // Status filter
-        if (isset($filters['status']) && $filters['status'] !== 'all') {
+        // Status
+        if (!empty($filters['status']) && $filters['status'] !== 'all') {
             $query->where('status', $filters['status']);
         }
 
-        // Search filter (patient or doctor name)
-        if (isset($filters['search']) && ! empty($filters['search'])) {
+        // Search
+        if (!empty($filters['search'])) {
             $search = $filters['search'];
-            $query->where(function ($q) use ($search) {
+
+            $query->whereHas('appointment', function ($q) use ($search) {
                 $q->whereHas('patient', function ($pq) use ($search) {
                     $pq->where('first_name', 'like', "%{$search}%")
                         ->orWhere('last_name', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%");
-                })
-                    ->orWhereHas('doctor', function ($dq) use ($search) {
-                        $dq->where('first_name', 'like', "%{$search}%")
-                            ->orWhere('last_name', 'like', "%{$search}%");
-                    });
+                })->orWhereHas('doctor', function ($dq) use ($search) {
+                    $dq->where('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%");
+                });
             });
         }
 
-        return $query->orderBy('appointment_date', 'desc')
-            ->orderBy('appointment_time', 'desc')
-            ->paginate(10);
+        return $query->orderBy('id', 'desc')->paginate(10);
     }
-
     /**
      * Get all appointments for export (without pagination)
      */
     public function getAppointmentsForExport($filters = [])
     {
-        $query = Appointment::with(['patient', 'doctor', 'patient.patientProfile', 'doctor.doctorProfile'])
-            ->whereIn('status', ['completed', 'cancelled', 'no_show'])
+        $query = AppointmentHistory::with(['patient', 'doctor', 'patient.patientProfile', 'doctor.doctorProfile'])
             ->whereHas('patient')
             ->whereHas('doctor');
 
@@ -148,7 +144,7 @@ class HistoryService
      */
     public function getStatistics($filters = [])
     {
-        $query = Appointment::whereIn('status', ['completed', 'cancelled', 'no_show']);
+        $query = AppointmentHistory::query();
 
         // Apply date range only if BOTH dates are provided
         $hasFromDate = isset($filters['from_date']) && ! empty($filters['from_date']);
@@ -180,10 +176,9 @@ class HistoryService
      */
     public function getAppointmentDetails($id)
     {
-        return Appointment::with([
-            'patient.patientProfile',
-            'doctor.doctorProfile.specialty',
-            'prescriptions',
+        return AppointmentHistory::with([
+            'appointment.patient.patientProfile',
+            'appointment.doctor.doctorProfile.specialty'
         ])->findOrFail($id);
     }
 }

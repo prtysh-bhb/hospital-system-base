@@ -258,16 +258,18 @@
 
             console.log('Document ready, loading calendar for:', currentMonth);
 
-            // Load appropriate view based on URL (pass false to avoid re-updating URL)
-            if (currentView === 'week') {
-                switchView('week', false);
-            } else if (currentView === 'day') {
-                switchView('day', false);
-            } else {
-                switchView('month', false);
-            }
-
-            loadWeeklySchedule();
+            // Load weekly schedule FIRST, then initialize the view
+            // This prevents race condition where week/day views render before schedule data is loaded
+            loadWeeklySchedule(function() {
+                // Load appropriate view based on URL (pass false to avoid re-updating URL)
+                if (currentView === 'week') {
+                    switchView('week', false);
+                } else if (currentView === 'day') {
+                    switchView('day', false);
+                } else {
+                    switchView('month', false);
+                }
+            });
 
             // View switchers
             $('#viewMonth').on('click', function() {
@@ -427,36 +429,19 @@
                 'cancelled': 'bg-red-100 text-red-700 border-red-200'
             };
 
-            // Calculate time range based on doctor's schedule for the week
-            let minStartHour = 23;
-            let maxEndHour = 0;
-
-            weekDates.forEach(function(dateStr) {
-                const date = new Date(dateStr);
-                const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
-                const daySchedule = doctorScheduleData.find(s => s.day_of_week === dayOfWeek);
-
-                if (daySchedule && daySchedule.is_available) {
-                    const startHour = parseTimeToHour(daySchedule.start_time);
-                    const endHour = parseTimeToHour(daySchedule.end_time);
-                    if (startHour < minStartHour) minStartHour = startHour;
-                    if (endHour > maxEndHour) maxEndHour = endHour;
-                }
-            });
-
-            // Default to 9 AM - 5 PM if no schedule found
-            if (minStartHour > maxEndHour) {
-                minStartHour = 9;
-                maxEndHour = 17;
+            // Generate 24-hour time slots (00:00 to 23:00)
+            const timeSlots = [];
+            for (let hour = 0; hour < 24; hour++) {
+                timeSlots.push({
+                    display: `${String(hour).padStart(2, '0')}:00`,
+                    hour: hour
+                });
             }
 
-            // Generate time slots
-            const timeSlots = generateTimeSlots(minStartHour, maxEndHour);
-
             let html = `
-                <div class="border border-gray-200 rounded-lg overflow-hidden">
+                <div class="border border-gray-200 rounded-lg overflow-hidden max-h-[70vh] overflow-y-auto">
                     <!-- Week Header -->
-                    <div class="grid grid-cols-8 border-b border-gray-200 bg-gray-50">
+                    <div class="grid grid-cols-8 border-b border-gray-200 bg-gray-50 sticky top-0 z-10">
                         <div class="p-4 border-r border-gray-200">
                             <p class="text-xs font-semibold text-gray-500 uppercase">Time</p>
                         </div>
@@ -600,18 +585,21 @@
             const daySchedule = doctorScheduleData.find(s => s.day_of_week === dayOfWeek);
             const isAvailable = daySchedule && daySchedule.is_available;
 
-            // Get time slots based on doctor's schedule for this day
-            let timeSlots;
-            let dayStartHour = 9;
-            let dayEndHour = 17;
+            // Generate 24-hour time slots (00:00 to 23:00)
+            const timeSlots = [];
+            for (let hour = 0; hour < 24; hour++) {
+                timeSlots.push({
+                    display: `${String(hour).padStart(2, '0')}:00`,
+                    hour: hour
+                });
+            }
 
+            // Get working hours for highlighting
+            let workingStartHour = -1;
+            let workingEndHour = -1;
             if (isAvailable) {
-                dayStartHour = parseTimeToHour(daySchedule.start_time);
-                dayEndHour = parseTimeToHour(daySchedule.end_time);
-                timeSlots = generateTimeSlots(dayStartHour, dayEndHour);
-            } else {
-                // Default slots for unavailable days
-                timeSlots = generateTimeSlots(9, 17);
+                workingStartHour = parseTimeToHour(daySchedule.start_time);
+                workingEndHour = parseTimeToHour(daySchedule.end_time);
             }
 
             let html = `
@@ -627,7 +615,7 @@
                     </div>
 
                     <!-- Time Grid -->
-                    <div class="divide-y divide-gray-100">
+                    <div class="divide-y divide-gray-100 max-h-[60vh] overflow-y-auto">
             `;
 
             timeSlots.forEach(slot => {
@@ -638,10 +626,15 @@
                     return aptHour === slotHour;
                 });
 
+                // Check if this hour is within working hours
+                const isWorkingHour = isAvailable && slotHour >= workingStartHour && slotHour <= workingEndHour;
+                const rowBgClass = isWorkingHour ? 'bg-green-50/30' : '';
+
                 html += `
-                    <div class="grid grid-cols-12 p-4 hover:bg-gray-50 transition-colors">
+                    <div class="grid grid-cols-12 p-4 hover:bg-gray-50 transition-colors ${rowBgClass}">
                         <div class="col-span-2">
                             <p class="text-sm font-medium text-gray-600">${slot.display}</p>
+                            ${isWorkingHour ? '<span class="text-xs text-green-600">Working</span>' : ''}
                         </div>
                         <div class="col-span-10">
                 `;
@@ -783,7 +776,7 @@
             });
         }
 
-        function loadWeeklySchedule() {
+        function loadWeeklySchedule(callback) {
             console.log('Loading weekly schedule...');
 
             $.ajax({
@@ -799,10 +792,20 @@
                     } else {
                         showError('#weeklySchedule', response.message || 'Failed to load schedule');
                     }
+
+                    // Call the callback after schedule is loaded (success or with error data)
+                    if (typeof callback === 'function') {
+                        callback();
+                    }
                 },
                 error: function(xhr, status, error) {
                     console.error('Schedule AJAX error:', error);
                     showError('#weeklySchedule', 'Failed to load schedule');
+
+                    // Still call callback on error so views can render (with empty schedule)
+                    if (typeof callback === 'function') {
+                        callback();
+                    }
                 }
             });
         }
@@ -1086,13 +1089,13 @@
                                             <span class="text-gray-700">${apt.type}</span>
                                         </div>
                                         ${apt.reason ? `
-                                                                                                                        <div class="flex items-start text-sm">
-                                                                                                                            <svg class="w-4 h-4 mr-2 text-gray-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                                                                                                            </svg>
-                                                                                                                            <span class="text-gray-600">${apt.reason}</span>
-                                                                                                                        </div>
-                                                                                                                        ` : ''}
+                                                                                                                                <div class="flex items-start text-sm">
+                                                                                                                                    <svg class="w-4 h-4 mr-2 text-gray-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                                                                                                    </svg>
+                                                                                                                                    <span class="text-gray-600">${apt.reason}</span>
+                                                                                                                                </div>
+                                                                                                                                ` : ''}
                                     </div>
                                 </div>
                             `).join('');

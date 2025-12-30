@@ -40,7 +40,79 @@
                 <label class="block text-xs sm:text-sm font-medium text-gray-600 mb-1">Phone</label>
                 <p class="text-sm sm:text-base text-gray-800">{{ $appointment->patient->phone ?? 'N/A' }}</p>
             </div>
+            @if ($appointment->patient->patientProfile)
+                @if ($appointment->patient->patientProfile->blood_group)
+                    <div>
+                        <label class="block text-xs sm:text-sm font-medium text-gray-600 mb-1">Blood Group</label>
+                        <p class="text-sm sm:text-base">
+                            <span class="px-3 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-full">
+                                {{ $appointment->patient->patientProfile->blood_group }}
+                            </span>
+                        </p>
+                    </div>
+                @endif
+                @if (
+                    $appointment->patient->patientProfile->emergency_contact_name ||
+                        $appointment->patient->patientProfile->emergency_contact_phone)
+                    <div>
+                        <label class="block text-xs sm:text-sm font-medium text-gray-600 mb-1">Emergency Contact</label>
+                        <p class="text-sm sm:text-base text-gray-800">
+                            {{ $appointment->patient->patientProfile->emergency_contact_name ?? 'N/A' }}
+                            @if ($appointment->patient->patientProfile->emergency_contact_phone)
+                                <br><span
+                                    class="text-gray-600">{{ $appointment->patient->patientProfile->emergency_contact_phone }}</span>
+                            @endif
+                        </p>
+                    </div>
+                @endif
+            @endif
         </div>
+
+        @if ($appointment->patient->patientProfile)
+            @if ($appointment->patient->patientProfile->medical_history)
+                <div class="mt-4">
+                    <label class="block text-xs sm:text-sm font-medium text-gray-600 mb-1">Medical History</label>
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                        <p class="text-sm text-gray-700">{{ $appointment->patient->patientProfile->medical_history }}
+                        </p>
+                    </div>
+                </div>
+            @endif
+
+            @if ($appointment->patient->patientProfile->current_medications)
+                <div class="mt-4">
+                    <label class="block text-xs sm:text-sm font-medium text-gray-600 mb-1">Current Medications</label>
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                        <p class="text-sm text-gray-700">
+                            {{ $appointment->patient->patientProfile->current_medications }}</p>
+                    </div>
+                </div>
+            @endif
+
+            @if (
+                $appointment->patient->patientProfile->insurance_provider ||
+                    $appointment->patient->patientProfile->insurance_number)
+                <div class="mt-4">
+                    <label class="block text-xs sm:text-sm font-medium text-gray-600 mb-1">Insurance Information</label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        @if ($appointment->patient->patientProfile->insurance_provider)
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Provider</label>
+                                <p class="text-sm text-gray-800">
+                                    {{ $appointment->patient->patientProfile->insurance_provider }}</p>
+                            </div>
+                        @endif
+                        @if ($appointment->patient->patientProfile->insurance_number)
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Policy Number</label>
+                                <p class="text-sm text-gray-800">
+                                    {{ $appointment->patient->patientProfile->insurance_number }}</p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @endif
+        @endif
     </div>
 
     <!-- Doctor Information -->

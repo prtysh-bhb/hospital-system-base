@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Frontdesk;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\AppointmentSlotService;
-use App\Services\public\BookAppointmentService;
+use App\Services\Public\BookAppointmentService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -23,7 +23,10 @@ class AddAppointmentController extends Controller
 
     public function index()
     {
-        return view('frontdesk.add-appointment');
+        // Get form field visibility settings (centralized method)
+        $formSettings = BookAppointmentService::getFormSettings();
+
+        return view('frontdesk.add-appointment', compact('formSettings'));
     }
 
     public function searchPatient(Request $request)
@@ -89,6 +92,47 @@ class AddAppointmentController extends Controller
         return response()->json($result);
     }
 
+    public function checkDoctorLeave(Request $request)
+    {
+        $doctorId = $request->get('doctor_id');
+
+        if (! $doctorId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Doctor ID is required',
+            ]);
+        }
+
+        $leaveInfo = $this->slotService->getDoctorUpcomingLeave($doctorId);
+
+        if ($leaveInfo && $leaveInfo['is_currently_on_leave']) {
+            return response()->json([
+                'success' => true,
+                'on_leave' => true,
+                'is_currently_on_leave' => true,
+                'message' => "This doctor is currently on leave until {$leaveInfo['end_date_formatted']}. Please select another doctor.",
+                'leave_info' => $leaveInfo,
+            ]);
+        }
+
+        if ($leaveInfo && $leaveInfo['has_leave']) {
+            return response()->json([
+                'success' => true,
+                'on_leave' => false,
+                'has_upcoming_leave' => true,
+                'message' => "Note: This doctor will be on leave from {$leaveInfo['start_date_formatted']} to {$leaveInfo['end_date_formatted']}.",
+                'leave_info' => $leaveInfo,
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'on_leave' => false,
+            'has_upcoming_leave' => false,
+            'message' => null,
+        ]);
+    }
+
     public function store(Request $request)
     {
         try {
@@ -101,12 +145,21 @@ class AddAppointmentController extends Controller
                 'phone' => 'required_without:patient_id|regex:/^[0-9]+$/|min:10|max:15',
                 'date_of_birth' => 'required_without:patient_id|date|before:today',
                 'gender' => 'required_without:patient_id|in:male,female,other',
+                'address' => 'nullable|string|max:500',
                 'doctor_id' => 'required|exists:users,id',
                 'appointment_date' => 'required|date|after_or_equal:today',
                 'appointment_time' => 'required|string',
                 'appointment_type' => 'required|in:consultation,follow_up,emergency,check_up',
                 'reason_for_visit' => 'required|string|min:10|max:100',
                 'notes' => 'nullable|string|max:100',
+                // Optional patient profile fields
+                'emergency_contact_name' => 'nullable|string|min:2|max:255',
+                'emergency_contact_phone' => 'nullable|regex:/^[0-9]{10,15}$/',
+                'blood_group' => 'nullable|string|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
+                'medical_history' => 'nullable|string|max:1000',
+                'current_medications' => 'nullable|string|max:1000',
+                'insurance_provider' => 'nullable|string|max:255',
+                'insurance_number' => 'nullable|string|max:255',
             ], [
 
                 // patient_id
@@ -205,6 +258,14 @@ class AddAppointmentController extends Controller
                     'date_of_birth' => $validated['date_of_birth'],
                     'gender' => $validated['gender'],
                     'address' => $validated['address'] ?? null,
+                    // Optional patient profile fields
+                    'emergency_contact_name' => $validated['emergency_contact_name'] ?? null,
+                    'emergency_contact_phone' => $validated['emergency_contact_phone'] ?? null,
+                    'blood_group' => $validated['blood_group'] ?? null,
+                    'medical_history' => $validated['medical_history'] ?? null,
+                    'current_medications' => $validated['current_medications'] ?? null,
+                    'insurance_provider' => $validated['insurance_provider'] ?? null,
+                    'insurance_number' => $validated['insurance_number'] ?? null,
                 ]);
             }
             $result = $this->bookingService->createAppointment($appointmentData);

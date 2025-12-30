@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Doctor;
 
 use App\Http\Controllers\Controller;
-use App\Services\Doctor\DoctorDashboardService;
+use App\Services\Doctor\DoctorDashboadService;
 
 class DoctorDashboardController extends Controller
 {
-    protected DoctorDashboardService $dashboardService;
+    protected DoctorDashboadService $dashboardService;
 
-    public function __construct(DoctorDashboardService $dashboardService)
+    public function __construct(DoctorDashboadService $dashboardService)
     {
         $this->dashboardService = $dashboardService;
     }

@@ -114,24 +114,25 @@ class HistoryController extends Controller
     public function show($id)
     {
         try {
-            $appointment = $this->historyService->getAppointmentDetails($id);
+            $history = $this->historyService->getAppointmentDetails($id);
+            $appointment = $history->appointment;
 
             return response()->json([
                 'success' => true,
                 'appointment' => [
-                    'id' => $appointment->id,
+                    'id' => $history->id,
                     'appointment_number' => $appointment->appointment_number,
                     'patient_name' => $appointment->patient->full_name,
                     'patient_email' => $appointment->patient->email,
                     'patient_phone' => $appointment->patient->phone,
                     'doctor_name' => $appointment->doctor->full_name,
-                    'appointment_date' => Carbon::parse($appointment->appointment_date)->format('M d, Y'),
-                    'appointment_time' => Carbon::parse($appointment->appointment_time)->format('h:i A'),
-                    'status' => $appointment->status,
+                    'appointment_date' => Carbon::parse($history->appointment_date)->format('M d, Y'),
+                    'appointment_time' => Carbon::parse($history->appointment_time)->format('h:i A'),
+                    'status' => $history->status,
                     'appointment_type' => $appointment->appointment_type,
                     'reason_for_visit' => $appointment->reason_for_visit,
                     'symptoms' => $appointment->symptoms,
-                    'notes' => $appointment->notes,
+                    'notes' => $history->note,
                     'cancellation_reason' => $appointment->cancellation_reason,
                     'specialization' => $appointment->doctor->doctorProfile->specialty->name ?? 'N/A',
                 ],
