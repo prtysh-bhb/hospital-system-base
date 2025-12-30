@@ -6,11 +6,11 @@
 
 @section('content')
     <!-- Quick Actions -->
-    <div class="mb-6 sm:mb-8">
-        <h3 class="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">Quick Actions</h3>
+    <div class="mb-6">
+        <h3 class="text-base font-semibold text-gray-800 mb-3">Quick Actions</h3>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <a href="{{ route('frontdesk.add-appointment') }}"
-                class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all">
+                class="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-all">
                 <div class="w-10 h-10 sm:w-12 sm:h-12 bg-sky-100 rounded-lg flex items-center justify-center mb-3 sm:mb-4">
                     <svg class="w-5 h-5 sm:w-6 sm:h-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -21,7 +21,7 @@
             </a>
 
             <a href="{{ route('frontdesk.doctor-schedule') }}"
-                class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all">
+                class="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-all">
                 <div
                     class="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center mb-3 sm:mb-4">
                     <svg class="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" stroke="currentColor"
@@ -35,7 +35,7 @@
             </a>
 
             <a href="{{ route('frontdesk.patients') }}"
-                class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all">
+                class="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-all">
                 <div
                     class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-3 sm:mb-4">
                     <svg class="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" fill="none" stroke="currentColor"
@@ -49,7 +49,7 @@
             </a>
 
             <a href="{{ route('frontdesk.history') }}"
-                class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all">
+                class="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-all">
                 <div
                     class="w-10 h-10 sm:w-12 sm:h-12 bg-amber-100 rounded-lg flex items-center justify-center mb-3 sm:mb-4">
                     <svg class="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" fill="none" stroke="currentColor"
@@ -65,9 +65,9 @@
     </div>
 
     <!-- Today's Appointments -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-4 sm:mb-6">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
-            <h3 class="text-base sm:text-lg font-semibold text-gray-800">Today's Appointments</h3>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-3 sm:p-4 mb-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <h3 class="text-base font-semibold text-gray-800">Today's Appointments</h3>
             <span class="text-xs sm:text-sm text-gray-500" id="current-date">Loading...</span>
         </div>
 
@@ -81,8 +81,8 @@
     </div>
 
     <!-- Stats -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
-        <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        <div class="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-100">
             <p class="text-xs sm:text-sm text-gray-500 mb-2">Today's Total</p>
             <p class="text-2xl sm:text-3xl font-bold text-gray-800" id="stat-today-total">
                 <span class="inline-block animate-pulse bg-gray-200 rounded w-12 h-8"></span>
@@ -90,7 +90,7 @@
             <p class="text-xs sm:text-sm text-green-600 mt-2">Appointments</p>
         </div>
 
-        <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100">
+        <div class="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-100">
             <p class="text-xs sm:text-sm text-gray-500 mb-2">Waiting</p>
             <p class="text-2xl sm:text-3xl font-bold text-gray-800" id="stat-waiting">
                 <span class="inline-block animate-pulse bg-gray-200 rounded w-12 h-8"></span>
@@ -98,7 +98,7 @@
             <p class="text-xs sm:text-sm text-amber-600 mt-2">Patients in queue</p>
         </div>
 
-        <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100">
+        <div class="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-100">
             <p class="text-xs sm:text-sm text-gray-500 mb-2">Available Doctors</p>
             <p class="text-2xl sm:text-3xl font-bold text-gray-800" id="stat-available-doctors">
                 <span class="inline-block animate-pulse bg-gray-200 rounded w-12 h-8"></span>
@@ -108,9 +108,9 @@
     </div>
 
     <!-- Recent Activity -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
-            <h3 class="text-base sm:text-lg font-semibold text-gray-800">Recent Activity</h3>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-3 sm:p-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <h3 class="text-base font-semibold text-gray-800">Recent Activity</h3>
             <span class="text-xs text-gray-400 flex items-center gap-1">
                 <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                 Live updates every 10s

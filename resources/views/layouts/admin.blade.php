@@ -67,9 +67,9 @@
     <!-- Sidebar -->
     <aside id="sidebar"
         class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform -translate-x-full transition-transform duration-300 ease-in-out lg:translate-x-0 lg:inset-0">
-        <div class="p-4 sm:p-5 border-b flex items-center justify-between">
+        <div class="p-4 border-b flex items-center justify-between">
             <div>
-                <h1 class="text-xl sm:text-2xl font-bold text-sky-700">MediCare HMS</h1>
+                <h1 class="text-xl font-bold text-sky-700">MediCare HMS</h1>
             </div>
             <button id="close-sidebar" class="lg:hidden text-gray-500 hover:text-gray-700">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -77,7 +77,7 @@
                 </svg>
             </button>
         </div>
-        <nav class="p-3 sm:p-4 overflow-y-auto" style="max-height: calc(100vh - 100px);">
+        <nav class="p-3 overflow-y-auto" style="max-height: calc(100vh - 100px);">
             <a href="{{ route('admin.dashboard') }}"
                 class="flex items-center px-3 sm:px-4 py-2 sm:py-3 mb-2 {{ request()->routeIs('admin.dashboard') ? 'text-white bg-sky-600' : 'text-gray-700 hover:bg-gray-100' }} rounded-lg text-sm sm:text-base">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -167,7 +167,7 @@
     <main class="min-h-screen lg:ml-64">
         <!-- Header -->
         <header class="bg-white shadow-sm sticky top-0 z-30">
-            <div class="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+            <div class="flex items-center justify-between px-4 sm:px-6 py-3">
                 <div class="flex items-center space-x-3 sm:space-x-4">
                     <!-- Mobile Menu Button -->
                     <button id="mobile-menu-button"
@@ -177,7 +177,7 @@
                                 d="M4 6h16M4 12h16M4 18h16" />
                         </svg>
                     </button>
-                    <h2 class="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-800">@yield('page-title')</h2>
+                    <h2 class="text-lg font-semibold text-gray-800">@yield('page-title')</h2>
                 </div>
                 <div class="flex items-center space-x-2 sm:space-x-4">
                     @yield('header-actions')
@@ -195,7 +195,7 @@
         </header>
 
         <!-- Page Content -->
-        <div class="p-4 sm:p-6 lg:p-8">
+        <div class="p-4 sm:p-6">
             @yield('content')
         </div>
     </main>
@@ -210,8 +210,8 @@
             <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full relative z-50 max-h-[90vh] overflow-y-auto">
                 <!-- Modal Header -->
                 <div
-                    class="flex items-center justify-between px-6 py-4 border-b border-gray-200 sticky top-0 bg-white z-10">
-                    <h3 class="modal-title text-lg sm:text-xl font-semibold text-gray-800">Appointment Details</h3>
+                    class="flex items-center justify-between px-4 py-3 border-b border-gray-200 sticky top-0 bg-white z-10">
+                    <h3 class="modal-title text-base font-semibold text-gray-800">Appointment Details</h3>
                     <button type="button" onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -221,7 +221,7 @@
                 </div>
 
                 <!-- Modal Body -->
-                <div class="addmodalbody p-4 sm:p-6">
+                <div class="addmodalbody p-4">
                     <!-- Form will be loaded here -->
                 </div>
             </div>

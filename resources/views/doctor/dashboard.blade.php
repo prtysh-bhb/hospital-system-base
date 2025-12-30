@@ -6,8 +6,8 @@
 
 @section('content')
     <!-- Stats Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
-        <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4">
+        <div class="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-100">
             <div class="flex items-center justify-between mb-2">
                 <div class="w-10 h-10 bg-sky-100 rounded-lg flex items-center justify-center">
                     <svg class="w-5 h-5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -20,7 +20,7 @@
             <p class="text-xs sm:text-sm text-gray-500">Today's Appointments</p>
         </div>
 
-        <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100">
+        <div class="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-100">
             <div class="flex items-center justify-between mb-2">
                 <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
                     <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -33,7 +33,7 @@
             <p class="text-xs sm:text-sm text-gray-500">Completed Today</p>
         </div>
 
-        <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100">
+        <div class="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-100">
             <div class="flex items-center justify-between mb-2">
                 <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
                     <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -46,7 +46,7 @@
             <p class="text-xs sm:text-sm text-gray-500">Pending Today</p>
         </div>
 
-        <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100">
+        <div class="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-100">
             <div class="flex items-center justify-between mb-2">
                 <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                     <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -61,8 +61,8 @@
     </div>
 
     <!-- Quick Actions -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-4 sm:mb-6">
-        <h3 class="font-semibold text-gray-800 mb-3 sm:mb-4 text-base sm:text-lg">Quick Actions</h3>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-3 sm:p-4 mb-4">
+        <h3 class="font-semibold text-gray-800 mb-3 text-base">Quick Actions</h3>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <a href="{{ route('doctor.calendar') }}"
                 class="px-3 sm:px-4 py-2 sm:py-3 bg-sky-50 text-sky-700 rounded-lg font-medium hover:bg-sky-100 text-sm sm:text-base text-center">
@@ -85,16 +85,16 @@
     </div>
 
     <!-- Today's Appointments -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
-        <div class="p-4 sm:p-6 border-b border-gray-100 flex justify-between items-center">
-            <h3 class="font-semibold text-gray-800 text-base sm:text-lg">Today's Appointments</h3>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100">
+        <div class="p-3 sm:p-4 border-b border-gray-100 flex justify-between items-center">
+            <h3 class="font-semibold text-gray-800 text-base">Today's Appointments</h3>
             @if ($upcomingCount > 0)
                 <span class="text-xs sm:text-sm text-gray-500">{{ $upcomingCount }} upcoming this week</span>
             @endif
         </div>
         <div class="divide-y divide-gray-100">
             @forelse($todayAppointments as $appointment)
-                <div class="p-4 sm:p-6">
+                <div class="p-3 sm:p-4">
                     <div class="flex items-start justify-between mb-2">
                         <div>
                             <p class="font-medium text-gray-800 text-sm sm:text-base">{{ $appointment['patient_name'] }}</p>

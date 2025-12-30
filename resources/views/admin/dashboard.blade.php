@@ -6,8 +6,8 @@
 
 @section('content')
     <!-- Stats Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
-        <div class="bg-white p-4 sm:p-6 rounded-lg sm:rounded-xl shadow-sm border border-gray-100">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-100">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs sm:text-sm text-gray-500">Total Patients</p>
@@ -21,10 +21,9 @@
                     </svg>
                 </div>
             </div>
-            {{-- <p class="text-sm text-green-600 mt-4">↑ 12% from last month</p> --}}
         </div>
 
-        <div class="bg-white p-4 sm:p-6 rounded-lg sm:rounded-xl shadow-sm border border-gray-100">
+        <div class="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-100">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs sm:text-sm text-gray-500">Today's Appointments</p>
@@ -38,10 +37,9 @@
                     </svg>
                 </div>
             </div>
-            {{-- <p class="text-sm text-gray-600 mt-4">8 pending confirmation</p> --}}
         </div>
 
-        <div class="bg-white p-4 sm:p-6 rounded-lg sm:rounded-xl shadow-sm border border-gray-100">
+        <div class="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-100">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs sm:text-sm text-gray-500">Total Doctors</p>
@@ -54,10 +52,9 @@
                     </svg>
                 </div>
             </div>
-            {{-- <p class="text-sm text-green-600 mt-4">24 active today</p> --}}
         </div>
 
-        <div class="bg-white p-4 sm:p-6 rounded-lg sm:rounded-xl shadow-sm border border-gray-100">
+        <div class="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-100">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs sm:text-sm text-gray-500">Revenue (Today)</p>
@@ -67,18 +64,17 @@
                     <svg class="w-6 h-6 text-amber-600" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h3m5 0h-5m5 3h-2m-6.003 0H14m-3-3c1 0 3 .6 3 3m-1 7-5.003-4H11c1 0 3-.6 3-3"></path></g></svg>
                 </div>
             </div>
-            {{-- <p class="text-sm text-green-600 mt-4">↑ 8% from yesterday</p> --}}
         </div>
     </div>
 
     <!-- Recent Appointments & Active Doctors -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <!-- Recent Appointments -->
-        <div class="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-100">
-            <div class="p-4 sm:p-6 border-b border-gray-100">
-                <h3 class="text-base sm:text-lg font-semibold text-gray-800">Recent Appointments</h3>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100">
+            <div class="p-3 sm:p-4 border-b border-gray-100">
+                <h3 class="text-base font-semibold text-gray-800">Recent Appointments</h3>
             </div>
-            <div class="p-4 sm:p-6">
+            <div class="p-3 sm:p-4">
                 <div id="recentAppointmentsContainer" class="space-y-4 max-h-64 overflow-y-auto">
 
                 </div>
@@ -86,11 +82,11 @@
         </div>
 
         <!-- Active Doctors -->
-        <div class="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-100">
-            <div class="p-4 sm:p-6 border-b border-gray-100">
-                <h3 class="text-base sm:text-lg font-semibold text-gray-800">Active Doctors Today</h3>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100">
+            <div class="p-3 sm:p-4 border-b border-gray-100">
+                <h3 class="text-base font-semibold text-gray-800">Active Doctors Today</h3>
             </div>
-            <div class="p-4 sm:p-6">
+            <div class="p-3 sm:p-4">
                 <div id="activeDoctorsContainer" class="space-y-4 max-h-64 overflow-y-auto">
 
                 </div>
@@ -99,15 +95,15 @@
     </div>
 
     <!-- Recent Activity -->
-    <div class="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-100">
-        <div class="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between">
-            <h3 class="text-base sm:text-lg font-semibold text-gray-800">Recent Activity</h3>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100">
+        <div class="p-3 sm:p-4 border-b border-gray-100 flex items-center justify-between">
+            <h3 class="text-base font-semibold text-gray-800">Recent Activity</h3>
             <span class="text-xs text-gray-400 flex items-center gap-1">
                 <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                 Live updates
             </span>
         </div>
-        <div class="p-4 sm:p-6">
+        <div class="p-3 sm:p-4">
             <div id="recentActivityContainer" class="space-y-3 max-h-80 overflow-y-auto">
                 <!-- Loading State -->
                 <div class="text-center py-8">
